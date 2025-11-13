@@ -1,20 +1,22 @@
 import type { Handle } from '@sveltejs/kit';
-import crypto from 'crypto';
+import { v4 as uuid } from 'uuid';
 
 export const handle: Handle = async ({ event, resolve }) => {
-  let sessionId = event.cookies.get('session_id');
+    // Retrieve or create sessionId
+    let sessionId = event.cookies.get('sessionId');
+    if (!sessionId) {
+        sessionId = uuid();
+        event.cookies.set('sessionId', sessionId, {
+            path: '/',
+            httpOnly: true,
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 30 // 30 days
+        });
+    }
 
-  if (!sessionId) {
-    sessionId = crypto.randomBytes(16).toString('hex');
-    event.cookies.set('session_id', sessionId, {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: false // set to true when using https in production
-    });
-  }
+    // Put sessionId into locals
+    event.locals.sessionId = sessionId;
 
-  event.locals.sessionId = sessionId;
-
-  return resolve(event);
+    return resolve(event);
 };
+

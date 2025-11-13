@@ -10,7 +10,9 @@ const SCOPES = [
   'openid',
   'email',
   'profile',
-  'https://www.googleapis.com/auth/spreadsheets'
+  'https://www.googleapis.com/auth/drive.metadata.readonly',
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/drive.file'
 ];
 
 // DEV-ONLY: token storage in memory, per sessionId
@@ -40,6 +42,14 @@ export async function handleAuthCode(sessionId: string, code: string) {
   tokenStore.set(sessionId, tokens);
 
   return tokens;
+}
+
+export function saveTokens(sessionId: string, tokens: Credentials) {
+    tokenStore.set(sessionId, tokens);
+}
+
+export function getTokens(sessionId: string) {
+    return tokenStore.get(sessionId);
 }
 
 export function hasTokens(sessionId: string) {
