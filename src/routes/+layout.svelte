@@ -7,7 +7,8 @@
 	const navItems = [
 		{ href: '/', label: 'Home' },
 		{ href: '/decks', label: 'Decks' },
-		{ href: '/settings', label: 'Settings' }
+		{ href: '/settings', label: 'Settings' },
+		{ href: '/dashboard', label: 'Dashboard' }
 	];
 
 	function signInWithGoogle() {
