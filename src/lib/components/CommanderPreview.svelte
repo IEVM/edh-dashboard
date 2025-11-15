@@ -99,7 +99,7 @@
     <div class="flex flex-col">
       <span class="font-semibold">
         {#if deckName}
-          {deckName}
+          <a href="/dashboard/{encodeURIComponent(deckName)}">{deckName}</a>
         {:else if archidektUrl && archidektUrl != '-'}
           Archidekt Deck
         {:else}
@@ -107,7 +107,9 @@
         {/if}
       </span>
       {#if archidektUrl && archidektUrl != '-'}
-        <img src={image} alt="deckName">
+        <a href="/dashboard/{encodeURIComponent(deckName)}">
+            <img src={image} alt="deckName">
+        </a>
         <a
           href={archidektUrl}
           target="_blank"
