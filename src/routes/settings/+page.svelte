@@ -25,6 +25,14 @@
 		creating = false;
 	}
 
+	async function createSampleSheet() {
+		creating = true;
+		const res = await fetch('/api/sheets/create-sample', { method: 'POST' });
+		const data = await res.json();
+		selectedId = data.spreadsheetId;
+		creating = false;
+	}
+
 	async function saveSelection() {
 		let spreadsheetId = selectedId;
 
@@ -68,8 +76,8 @@
 				>
 				currently linked as the database.
 			</p>
-    {:else}
-      <p>You have not yet linked a database.</p>
+		{:else}
+			<p>You have not yet linked a database.</p>
 		{/if}
 	</section>
 
@@ -106,13 +114,31 @@
 	<section class="space-y-4 p-6 rounded-xl bg-surface-800 border border-surface-700/40">
 		<h2 class="text-xl font-semibold">Create New Spreadsheet</h2>
 
-		<button class="btn variant-filled-primary-500" on:click={createSheet} disabled={creating}>
-			{creating ? 'Creating…' : 'Create EDH Database'}
-		</button>
+		<div class="flex flex-col sm:flex-row gap-3">
+			<button class="btn variant-filled-primary-500" on:click={createSheet} disabled={creating}>
+				{creating ? 'Working…' : 'Create empty EDH database'}
+			</button>
+
+			<button
+				class="btn variant-outlined-primary-500"
+				on:click={createSampleSheet}
+				disabled={creating}
+			>
+				{creating ? 'Working…' : 'Create demo database (my decks + 5000 games)'}
+			</button>
+		</div>
 
 		{#if selectedId}
-			<p class="text-sm text-primary-300 mt-2">
-				Created: <span class="font-mono">{selectedId}</span>
+			<p class="text-sm text-surface-300 mt-2">
+				Created:
+				<a
+					href={`https://docs.google.com/spreadsheets/d/${selectedId}`}
+					target="_blank"
+					rel="noreferrer"
+					class="text-primary-300 hover:text-primary-200 underline underline-offset-2"
+				>
+					{selectedId}
+				</a>
 			</p>
 		{/if}
 	</section>

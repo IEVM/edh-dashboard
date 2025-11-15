@@ -45,11 +45,11 @@ export async function handleAuthCode(sessionId: string, code: string) {
 }
 
 export function saveTokens(sessionId: string, tokens: Credentials) {
-    tokenStore.set(sessionId, tokens);
+  tokenStore.set(sessionId, tokens);
 }
 
 export function getTokens(sessionId: string) {
-    return tokenStore.get(sessionId);
+  return tokenStore.get(sessionId);
 }
 
 export function hasTokens(sessionId: string) {
@@ -67,3 +67,16 @@ export function getSheetsClient(sessionId: string) {
 
   return google.sheets({ version: 'v4', auth: oauth2Client });
 }
+
+export function getDriveClient(sessionId: string) {
+  const tokens = tokenStore.get(sessionId);
+  if (!tokens) {
+    throw new Error('Not authenticated');
+  }
+
+  const oauth2Client = createOAuthClient();
+  oauth2Client.setCredentials(tokens);
+
+  return google.drive({ version: 'v3', auth: oauth2Client });
+}
+
