@@ -8,7 +8,8 @@
 		{ href: '/', label: 'Home' },
 		{ href: '/decks', label: 'Decks' },
 		{ href: '/settings', label: 'Settings' },
-		{ href: '/dashboard', label: 'Dashboard' }
+		{ href: '/dashboard', label: 'Dashboard' },
+		{ href: '/guide', label: 'Guide' }
 	];
 
 	function signInWithGoogle() {
