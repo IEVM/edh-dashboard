@@ -1,6 +1,6 @@
 <script lang="ts">
 	import CommanderPreview from '$lib/components/CommanderPreview.svelte';
-import { onMount } from 'svelte';
+  import { onMount } from 'svelte';
 
 	// comes from +page.server.ts
 	export let data: { spreadsheetId: string | null };
