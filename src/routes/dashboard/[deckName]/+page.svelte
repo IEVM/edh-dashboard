@@ -15,7 +15,13 @@
       wins: number;
       losses: number;
       winRate: number;
-      avgFun: number | null;
+      expectedWinrate: number;
+      avgFunSelf: number | null;
+      stdFunSelf: number | null;
+      avgFunOthers: number | null;
+      avgFunWins: number | null;
+      avgFunLosses: number | null;
+      avgEstBracket: number | null;
     };
     games: Array<{
       winner: number | null;
@@ -35,10 +41,11 @@
     return `${x.toFixed(1)}%`;
   }
 
-  function fmtNum(x: number | null) {
-    return x == null ? '–' : x.toFixed(1);
+  function fmtNum(x: number | null, digits = 1) {
+    return x == null ? '-' : x.toFixed(digits);
   }
 </script>
+
 
 <section class="space-y-8 max-w-5xl mx-auto">
   <div class="flex items-start justify-between gap-4">
@@ -82,8 +89,8 @@
     </div>
   {/if}
 
-  <!-- Quick stats -->
-  <div class="grid gap-4 md:grid-cols-4">
+    <!-- Quick stats -->
+  <div class="grid gap-4 md:grid-cols-3">
     <div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-1">
       <div class="text-xs uppercase tracking-wide text-surface-400">
         Games played
@@ -92,6 +99,7 @@
         {stats.totalGames}
       </div>
     </div>
+
     <div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-1">
       <div class="text-xs uppercase tracking-wide text-surface-400">
         Record
@@ -99,24 +107,93 @@
       <div class="text-lg font-semibold">
         {stats.wins}–{stats.losses}
       </div>
-    </div>
-    <div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-1">
-      <div class="text-xs uppercase tracking-wide text-surface-400">
-        Win rate
-      </div>
-      <div class="text-lg font-semibold">
+      <div class="text-xs text-surface-400">
         {fmtPct(stats.winRate)}
       </div>
     </div>
+
     <div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-1">
       <div class="text-xs uppercase tracking-wide text-surface-400">
-        Avg fun (your seat)
+        Avg fun (you)
       </div>
       <div class="text-lg font-semibold">
-        {fmtNum(stats.avgFun)}
+        {fmtNum(stats.avgFunSelf)}
+      </div>
+      <div class="text-xs text-surface-400">
+        Std dev: {fmtNum(stats.stdFunSelf, 2)}
+      </div>
+    </div>
+
+    <div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-1">
+      <div class="text-xs uppercase tracking-wide text-surface-400">
+        Table fun (others)
+      </div>
+      <div class="text-lg font-semibold">
+        {fmtNum(stats.avgFunOthers)}
+      </div>
+    </div>
+    <div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-2">
+      <div class="text-xs uppercase tracking-wide text-surface-400">
+        Fun when you win
+      </div>
+      <div class="text-lg font-semibold">
+        {fmtNum(stats.avgFunWins)}
+      </div>
+    </div>
+
+    <div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-2">
+      <div class="text-xs uppercase tracking-wide text-surface-400">
+        Fun when you lose
+      </div>
+      <div class="text-lg font-semibold">
+        {fmtNum(stats.avgFunLosses)}
+      </div>
+    </div>
+
+    <div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-2">
+				<div class="text-xs uppercase tracking-wide text-surface-400">
+					Overall Win Rate vs Fair Target
+				</div>
+				<div class="flex items-baseline gap-3">
+					<div class="text-2xl font-semibold">
+						{fmtPct(stats.winRate)}
+					</div>
+					<div class="text-xs text-surface-400">
+						Fair target: {fmtPct(stats.expectedWinrate)}
+					</div>
+				</div>
+				<div class="mt-1 h-2 rounded-full bg-surface-700/70 overflow-hidden flex">
+					<!-- shared (fair) part -->
+					<div class="h-full bg-primary-500" style={`width: ${Math.min(stats.expectedWinrate, stats.winRate)}%;`} />
+					<!-- difference segment (above or below fair) -->
+					{#if stats.winRate - stats.expectedWinrate > 0}
+						<div
+							class="h-full bg-error-500"
+							style={`width: ${stats.winRate - stats.expectedWinrate}%;`}
+						/>
+					{/if}
+				</div>
+				<div class="text-xs text-surface-400">
+					{#if stats.winRate - stats.expectedWinrate > 0}
+						You&#39;re winning {(stats.winRate - stats.expectedWinrate).toFixed(1)} percentage points more than a perfectly fair deck.
+					{:else if stats.winRate - stats.expectedWinrate < 0}
+						You&#39;re winning {Math.abs(stats.winRate - stats.expectedWinrate).toFixed(1)} percentage points less than a fair deck.
+					{:else}
+						You&#39;re exactly at the fair win rate.
+					{/if}
+				</div>
+			</div>
+
+    <div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-2">
+      <div class="text-xs uppercase tracking-wide text-surface-400">
+        Avg est. pod bracket
+      </div>
+      <div class="text-lg font-semibold">
+        {fmtNum(stats.avgEstBracket)}
       </div>
     </div>
   </div>
+
 
   <!-- Recent games -->
   <div class="space-y-3">
@@ -147,10 +224,10 @@
                   {/if}
                 </td>
                 <td class="px-4 py-2 text-right">
-                  {g.fun ?? '–'}
+                  {g.fun ?? '-'}
                 </td>
                 <td class="px-4 py-2 text-right">
-                  {g.estBracket ?? '–'}
+                  {g.estBracket ?? '-'}
                 </td>
                 <td class="px-4 py-2 text-xs text-surface-300">
                   {g.notes ?? ''}

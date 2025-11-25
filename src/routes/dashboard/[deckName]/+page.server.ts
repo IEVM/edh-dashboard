@@ -93,6 +93,15 @@ export const load: PageServerLoad = async ({ locals, params }) => {
   const deckGames: DeckGame[] = [];
   let totalGames = 0;
   let wins = 0;
+  let playersPlayed = 0;
+  let expectedWinrate = 0;
+
+  // collections for stats
+  const funSelfValues: number[] = [];
+  const funSelfWins: number[] = [];
+  const funSelfLosses: number[] = [];
+  const funOthersValues: number[] = [];
+  const estBracketValues: number[] = [];
 
   if (gamesValues.length > 1) {
     const headers = gamesValues[0].map((h) => String(h ?? '').toLowerCase().trim());
@@ -135,6 +144,26 @@ export const load: PageServerLoad = async ({ locals, params }) => {
       // same win logic as dashboard: winner === 1 => your deck won
       if (winnerNum === 1) wins += 1;
 
+      // collect stats inputs
+      if (funNum != null) {
+        funSelfValues.push(funNum);
+        if (winnerNum === 1) funSelfWins.push(funNum);
+        else funSelfLosses.push(funNum);
+      }
+
+      const others = [p2Num, p3Num, p4Num].filter(
+        (n): n is number => n != null
+      );
+      if (others.length > 0) {
+        const avgOthers =
+          others.reduce((a, b) => a + b, 0) / others.length;
+        funOthersValues.push(avgOthers);
+      }
+
+      if (estNum != null) {
+        estBracketValues.push(estNum);
+      }
+
       deckGames.push({
         deck: deckName,
         winner: winnerNum,
@@ -145,24 +174,37 @@ export const load: PageServerLoad = async ({ locals, params }) => {
         notes: notesVal,
         estBracket: estNum
       });
+
+      const playersInGame = 1 + ((p2Num != null) ? 1 : 0) + ((p3Num != null) ? 1 : 0) + ((p4Num != null) ? 1 : 0);
+
+      playersPlayed += playersInGame;
     }
+
+    expectedWinrate = 1 / playersPlayed * totalGames * 100;
+
   }
 
   const losses = Math.max(totalGames - wins, 0);
   const winRate =
     totalGames > 0 ? (wins / totalGames) * 100 : 0;
 
-  // Average fun (for your seat only)
-  let funSum = 0;
-  let funCount = 0;
-  for (const g of deckGames) {
-    if (g.fun != null) {
-      funSum += g.fun;
-      funCount += 1;
-    }
-  }
-  const avgFun =
-    funCount > 0 ? funSum / funCount : null;
+  const mean = (xs: number[]): number | null =>
+    xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+
+  const stdDev = (xs: number[]): number | null => {
+    if (xs.length < 2) return null;
+    const m = mean(xs)!;
+    const variance =
+      xs.reduce((sum, x) => sum + (x - m) ** 2, 0) / xs.length; // population std; change to /(xs.length - 1) for sample
+    return Math.sqrt(variance);
+  };
+
+  const avgFunSelf = mean(funSelfValues);
+  const stdFunSelf = stdDev(funSelfValues);
+  const avgFunOthers = mean(funOthersValues);
+  const avgFunWins = mean(funSelfWins);
+  const avgFunLosses = mean(funSelfLosses);
+  const avgEstBracket = mean(estBracketValues);
 
   return {
     deckName,
@@ -173,7 +215,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
       wins,
       losses,
       winRate,
-      avgFun
+      expectedWinrate,
+      avgFunSelf,
+      stdFunSelf,
+      avgFunOthers,
+      avgFunWins,
+      avgFunLosses,
+      avgEstBracket
     },
     games: deckGames
   };

@@ -18,7 +18,11 @@
 	let deckStats: DeckStats[] = [];
 	let totalGames = 0;
 	let overallWinRate = 0;
+	let targetWinRate = 0;
 	let bestDeck: DeckStats | null = null;
+
+	let baseWidth = 0;
+	let diffWidth = 0;
 
 	// Colors for the pie segments (reused in legend)
 	const pieColors = [
@@ -50,6 +54,7 @@
 		deckStats = [];
 		totalGames = 0;
 		overallWinRate = 0;
+		targetWinRate = 0;
 		bestDeck = null;
 
 		if (!spreadsheetId) {
@@ -83,6 +88,9 @@
 
 			const idxDeck = headers.indexOf('deck');
 			const idxWinner = headers.indexOf('winner');
+			const idxP2 = headers.indexOf('p2 fun');
+			const idxP3 = headers.indexOf('p3 fun');
+			const idxP4 = headers.indexOf('p4 fun');
 
 			if (idxDeck === -1 || idxWinner === -1) {
 				errorMsg =
@@ -94,6 +102,7 @@
 
 			// Map deck name -> { games, wins }
 			const deckMap = new Map<string, { games: number; wins: number }>();
+			let expectedWins = 0;
 
 			for (const row of rows) {
 				const deckName = (row[idxDeck] ?? '').toString().trim();
@@ -106,6 +115,17 @@
 				current.games += 1;
 				if (won) current.wins += 1;
 				deckMap.set(deckName, current);
+
+				let players = 1;
+				const valP2 = idxP2 >= 0 ? row[idxP2] : null;
+				const valP3 = idxP3 >= 0 ? row[idxP3] : null;
+				const valP4 = idxP4 >= 0 ? row[idxP4] : null;
+
+				if (valP2 != null && String(valP2).trim() !== '') players += 1;
+				if (valP3 != null && String(valP3).trim() !== '') players += 1;
+				if (valP4 != null && String(valP4).trim() !== '') players += 1;
+
+				expectedWins += 1 / players;
 			}
 
 			if (deckMap.size === 0) {
@@ -138,8 +158,13 @@
 			const totalWins = deckStats.reduce((sum, d) => sum + d.wins, 0);
 			overallWinRate = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
 
-			bestDeck =
-				deckStats.length > 0 ? [...deckStats].sort((a, b) => b.winRate - a.winRate)[0] : null;
+			targetWinRate = totalGames > 0 ? (expectedWins / totalGames) * 100 : 0;
+
+			bestDeck = deckStats.length > 0 ? [...deckStats].sort((a, b) => b.winRate - a.winRate)[0] : null;
+
+			baseWidth = Math.min(targetWinRate, overallWinRate);
+			diffWidth = overallWinRate -targetWinRate;
+
 		} catch (err) {
 			console.error(err);
 			errorMsg = 'Unexpected error while loading dashboard.';
@@ -240,13 +265,37 @@
 				</div>
 			</div>
 
-			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-1">
-				<div class="text-xs uppercase tracking-wide text-surface-400">Overall Win Rate</div>
-				<div class="text-2xl font-semibold">
-					{fmtPct(overallWinRate)}
+			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-2">
+				<div class="text-xs uppercase tracking-wide text-surface-400">
+					Overall Win Rate vs Fair Target
 				</div>
-				<div class="mt-1 h-2 rounded-full bg-surface-700/70 overflow-hidden">
-					<div class="h-full bg-primary-500" style={`width: ${Math.min(overallWinRate, 100)}%`} />
+				<div class="flex items-baseline gap-3">
+					<div class="text-2xl font-semibold">
+						{fmtPct(overallWinRate)}
+					</div>
+					<div class="text-xs text-surface-400">
+						Fair target: {fmtPct(targetWinRate)}
+					</div>
+				</div>
+				<div class="mt-1 h-2 rounded-full bg-surface-700/70 overflow-hidden flex">
+					<!-- shared (fair) part -->
+					<div class="h-full bg-primary-500" style={`width: ${baseWidth}%;`} />
+					<!-- difference segment (above or below fair) -->
+					{#if diffWidth > 0}
+						<div
+							class="h-full bg-error-500"
+							style={`width: ${diffWidth}%;`}
+						/>
+					{/if}
+				</div>
+				<div class="text-xs text-surface-400">
+					{#if diffWidth > 0}
+						You&#39;re winning {diffWidth.toFixed(1)} percentage points more than a perfectly fair deck.
+					{:else if diffWidth < 0}
+						You&#39;re winning {Math.abs(diffWidth).toFixed(1)} percentage points less than a fair deck.
+					{:else}
+						You&#39;re exactly at the fair win rate.
+					{/if}
 				</div>
 			</div>
 
