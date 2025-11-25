@@ -56,6 +56,8 @@
 	</header>
 
 	<main class="flex-1">
-		<slot />
+		<section class="space-y-8 max-w-5xl mx-auto">
+			<slot />
+		</section>
 	</main>
 </div>
