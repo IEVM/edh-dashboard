@@ -15,7 +15,6 @@ const SCOPES = [
   'https://www.googleapis.com/auth/drive.file'
 ];
 
-// DEV-ONLY: token storage in memory, per sessionId
 const tokenStore = new Map<string, Credentials>();
 
 /**

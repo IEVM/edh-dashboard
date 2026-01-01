@@ -263,7 +263,7 @@ export function getGamesJson(spreadsheetData: any): Games {
  *
  * Assumes:
  * - winner === 1 means "win"
- * - winner === 0 means "loss"
+ * - winner === 2, 3, 4 means "loss"
  * Other values are treated as "unknown/ignored".
  */
 export function statsFromGames(games: Games): Stats {
@@ -302,7 +302,7 @@ export function statsFromGames(games: Games): Stats {
     wins,
     losses,
     winRate,
-    expectedWinrate: 0.5, // Placeholder until you introduce a model / mapping.
+    expectedWinrate: 0.25, // Placeholder until you introduce a model / mapping.
     avgFunSelf: average(funSelfValues),
     stdFunSelf: standardDeviation(funSelfValues),
     avgFunOthers: average(funOtherValues),
@@ -326,9 +326,6 @@ export function withStatsFromGames(deck: Deck): Deck {
 /**
  * Attach correctly filtered games (from raw sheet data) to a deck.
  *
- * Note: this currently assumes `filterData(...)` effectively removes the header row
- * (because the header usually doesn't match the filter). In some edge cases (e.g.
- * missing/renamed "deck" column), the header could slip through.
  */
 export function withGames(deck: Deck, gamesSheetData: any): Deck {
   const filter: Filter = [{ column: 'deck', match: deck.deckName }];
