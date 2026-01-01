@@ -3,7 +3,7 @@
   import { browser } from '$app/environment';
 
   export let archidektUrl: string | null = null;
-  export let summary: string | null = "";
+  export let summary: string | null = null;
   export let deckName: string = '';
 
   let deckId: string | null = null;
@@ -13,13 +13,30 @@
   let image = '';
   let commanders: string[] = [];
 
-  // Extract numeric deck ID from a typical Archidekt URL
+  /**
+   * Extracts the numeric deck ID from an Archidekt deck URL.
+   *
+   * Accepts URLs like:
+   * - https://archidekt.com/decks/1234567/...
+   *
+   * @param url Archidekt URL (or null)
+   * @returns Deck ID as string, or null if not found
+   */
   function extractDeckId(url: string | null): string | null {
     if (!url) return null;
     const match = url.match(/archidekt\.com\/decks\/(\d+)/);
     return match ? match[1] : null;
   }
 
+  /**
+   * Attempts to extract commander names from an Archidekt deck payload.
+   *
+   * Uses a heuristic: finds a category whose name includes "commander" and
+   * maps its cards to oracle card names, then deduplicates.
+   *
+   * @param deck Parsed Archidekt deck object
+   * @returns List of commander card names (deduplicated)
+   */
   function extractCommanders(deck: any): string[] {
     if (!deck || !Array.isArray(deck.categories)) return [];
 
@@ -44,12 +61,19 @@
     return Array.from(new Set(names));
   }
 
+  /**
+   * Loads deck data via the internal API and updates UI state.
+   * Resets error/display state at the start, then sets loading true while fetching.
+   */
   async function loadDeck() {
     errorMsg = null;
     archidektName = '';
     commanders = [];
 
-    deckId = extractDeckId(archidektUrl);
+    // Treat "-" as "no deck linked" (same as null) to avoid unnecessary fetch attempts.
+    const effectiveUrl = archidektUrl && archidektUrl !== '-' ? archidektUrl : null;
+
+    deckId = extractDeckId(effectiveUrl);
 
     if (!deckId) {
       errorMsg = 'Invalid or missing Archidekt link.';
@@ -77,15 +101,16 @@
     }
   }
 
-  // Initial load
+  // Initial load (client-only)
   onMount(() => {
-    if (archidektUrl) {
+    // Keep sentinel handling consistent with reactive reload.
+    if (archidektUrl && archidektUrl !== '-') {
       loadDeck();
     }
   });
 
-  // Reload when URL changes
-  $: if (browser && archidektUrl) {
+  // Reload when URL changes (client-only guard)
+  $: if (browser && archidektUrl && archidektUrl !== '-') {
     // Don’t spam the API if the ID didn’t change
     const newId = extractDeckId(archidektUrl);
     if (newId && newId !== deckId) {
@@ -107,10 +132,12 @@
           No deck linked
         {/if}
       </span>
+
       {#if archidektUrl && archidektUrl != '-'}
         <a href="/dashboard/{encodeURIComponent(deckName)}">
-            <img src={image} alt={deckName}>
+          <img src={image} alt={deckName}>
         </a>
+
         <a
           href={archidektUrl}
           target="_blank"
@@ -129,8 +156,7 @@
 
   <!-- Summary -->
   {#if summary}
-    <p class="text-xs text-surface-300 text-left 
-         max-w-[250px] break-words whitespace-normal">
+    <p class="text-xs text-surface-300 text-left max-w-[250px] break-words whitespace-normal">
       {summary}
     </p>
   {/if}

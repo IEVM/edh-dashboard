@@ -1,7 +1,13 @@
-// src/routes/api/archidekt/[id]/+server.ts
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
+/**
+ * Proxies an Archidekt deck request so the client can fetch deck data without
+ * calling Archidekt directly (and to keep a stable same-origin API endpoint).
+ *
+ * @throws 400 if the deck id is missing
+ * @throws <status> if Archidekt responds with a non-2xx status
+ */
 export const GET: RequestHandler = async ({ params }) => {
   const id = params.id;
 
@@ -19,3 +25,4 @@ export const GET: RequestHandler = async ({ params }) => {
   const data = await res.json();
   return json(data);
 };
+

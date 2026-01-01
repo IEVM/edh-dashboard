@@ -1,12 +1,21 @@
 import type { RequestHandler } from './$types';
 import { getSheetsClient, getTokens } from '$lib/server/google';
 
+/**
+ * Creates a new Google Spreadsheet configured as an "EDH Deck Database".
+ *
+ * Steps:
+ *  1) Create a spreadsheet with two sheets: "Decks" and "Games"
+ *  2) Write header rows for both sheets
+ *  3) Add data validation rules (bracket ranges, fun scores, etc.)
+ *
+ * Responds with `{ spreadsheetId, url }` on success, or a 401/500 response otherwise.
+ */
 export const POST: RequestHandler = async ({ locals }) => {
   const tokens = getTokens(locals.sessionId);
-if (!tokens) return new Response('Not authenticated', { status: 401 });
+  if (!tokens) return new Response('Not authenticated', { status: 401 });
 
-const sheets = getSheetsClient(locals.sessionId);
-
+  const sheets = getSheetsClient(locals.sessionId);
 
   // 1) Create spreadsheet with Decks + Games sheets
   const createRes = await sheets.spreadsheets.create({
@@ -15,16 +24,8 @@ const sheets = getSheetsClient(locals.sessionId);
         title: 'EDH Deck Database'
       },
       sheets: [
-        {
-          properties: {
-            title: 'Decks'
-          }
-        },
-        {
-          properties: {
-            title: 'Games'
-          }
-        }
+        { properties: { title: 'Decks' } },
+        { properties: { title: 'Games' } }
       ]
     }
   });
@@ -34,13 +35,9 @@ const sheets = getSheetsClient(locals.sessionId);
     return new Response('Failed to create spreadsheet', { status: 500 });
   }
 
-  // Get sheetIds for Decks and Games
-  const decksSheet = createRes.data.sheets?.find(
-    (s) => s.properties?.title === 'Decks'
-  );
-  const gamesSheet = createRes.data.sheets?.find(
-    (s) => s.properties?.title === 'Games'
-  );
+  // Get sheetIds for Decks and Games (needed for validation ranges below).
+  const decksSheet = createRes.data.sheets?.find((s) => s.properties?.title === 'Decks');
+  const gamesSheet = createRes.data.sheets?.find((s) => s.properties?.title === 'Games');
 
   const decksSheetId = decksSheet?.properties?.sheetId;
   const gamesSheetId = gamesSheet?.properties?.sheetId;
@@ -57,21 +54,17 @@ const sheets = getSheetsClient(locals.sessionId);
       data: [
         {
           range: 'Decks!A1:D1',
-          values: [
-            ['Name', 'Target Bracket', 'Summary', 'Archidekt Link']
-          ]
+          values: [['Name', 'Target Bracket', 'Summary', 'Archidekt Link']]
         },
         {
           range: 'Games!A1:H1',
-          values: [
-            ['Deck', 'Winner', 'Fun', 'P2 Fun', 'P3 Fun', 'P4 Fun', 'Notes', 'Est. Pod Bracket']
-          ]
+          values: [['Deck', 'Winner', 'Fun', 'P2 Fun', 'P3 Fun', 'P4 Fun', 'Notes', 'Est. Pod Bracket']]
         }
       ]
     }
   });
 
-  // 3) Add validation rules with batchUpdate
+  // 3) Add validation rules with batchUpdate (sheetId-based ranges)
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId,
     requestBody: {
@@ -81,18 +74,15 @@ const sheets = getSheetsClient(locals.sessionId);
           setDataValidation: {
             range: {
               sheetId: decksSheetId,
-              startRowIndex: 1,   // row 2
-              endRowIndex: 1000,  // exclusive
+              startRowIndex: 1, // row 2
+              endRowIndex: 1000, // exclusive
               startColumnIndex: 1, // column B
               endColumnIndex: 2
             },
             rule: {
               condition: {
                 type: 'NUMBER_BETWEEN',
-                values: [
-                  { userEnteredValue: '1' },
-                  { userEnteredValue: '5' }
-                ]
+                values: [{ userEnteredValue: '1' }, { userEnteredValue: '5' }]
               },
               strict: true,
               showCustomUi: true
@@ -113,9 +103,7 @@ const sheets = getSheetsClient(locals.sessionId);
             rule: {
               condition: {
                 type: 'ONE_OF_RANGE',
-                values: [
-                  { userEnteredValue: '=Decks!A2:A' }
-                ]
+                values: [{ userEnteredValue: '=Decks!A2:A' }]
               },
               strict: true,
               showCustomUi: true
@@ -136,10 +124,7 @@ const sheets = getSheetsClient(locals.sessionId);
             rule: {
               condition: {
                 type: 'NUMBER_BETWEEN',
-                values: [
-                  { userEnteredValue: '1' },
-                  { userEnteredValue: '4' }
-                ]
+                values: [{ userEnteredValue: '1' }, { userEnteredValue: '4' }]
               },
               strict: true,
               showCustomUi: true
@@ -155,15 +140,12 @@ const sheets = getSheetsClient(locals.sessionId);
               startRowIndex: 1,
               endRowIndex: 5000,
               startColumnIndex: 2, // C
-              endColumnIndex: 6     // F
+              endColumnIndex: 6 // F (exclusive)
             },
             rule: {
               condition: {
                 type: 'NUMBER_BETWEEN',
-                values: [
-                  { userEnteredValue: '1' },
-                  { userEnteredValue: '5' }
-                ]
+                values: [{ userEnteredValue: '1' }, { userEnteredValue: '5' }]
               },
               strict: true,
               showCustomUi: true
@@ -184,10 +166,7 @@ const sheets = getSheetsClient(locals.sessionId);
             rule: {
               condition: {
                 type: 'NUMBER_BETWEEN',
-                values: [
-                  { userEnteredValue: '1' },
-                  { userEnteredValue: '5' }
-                ]
+                values: [{ userEnteredValue: '1' }, { userEnteredValue: '5' }]
               },
               strict: true,
               showCustomUi: true

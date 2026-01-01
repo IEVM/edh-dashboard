@@ -2,6 +2,13 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestEvent } from './$types';
 import { getSheetsClient, hasTokens } from '$lib/server/google';
 
+/**
+ * Reads a range from a Google Spreadsheet and returns its raw cell values.
+ *
+ * Query params:
+ * - `spreadsheetId` (required)
+ * - `range` (optional, defaults to `Sheet1!A1:D10`)
+ */
 export async function GET(event: RequestEvent) {
   const sessionId = event.locals.sessionId;
 
@@ -23,7 +30,5 @@ export async function GET(event: RequestEvent) {
     range
   });
 
-  const values = res.data.values ?? [];
-
-  return json({ values });
+  return json({ values: res.data.values ?? [] });
 }

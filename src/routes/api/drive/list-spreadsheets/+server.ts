@@ -1,6 +1,12 @@
 import type { RequestHandler } from './$types';
 import { getDriveClient, getTokens } from '$lib/server/google';
 
+/**
+ * Lists Google Drive spreadsheets visible to the authenticated user.
+ *
+ * Returns a JSON array of `{ id, name }` objects.
+ * Responds with 401 if the user is not authenticated.
+ */
 export const GET: RequestHandler = async ({ locals }) => {
   const tokens = getTokens(locals.sessionId);
   if (!tokens) return new Response('Not authenticated', { status: 401 });

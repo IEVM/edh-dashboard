@@ -1,21 +1,24 @@
 import type { PageServerLoad } from './$types';
 import { getSessionData } from '$lib/server/session';
 import { getSheetsClient } from '$lib/server/google';
-import {
-  loadDatabase,
-  getDeckJson,
-  type Deck
-} from '$lib/data/restructure';
+import { loadDatabase, getDeckJson, type Deck } from '$lib/data/restructure';
 
 type DecksPageData = {
   error?: string;
   decks: Deck[];
 };
 
+/**
+ * Server-side loader for the "Decks" overview page.
+ *
+ * - Reads the selected spreadsheetId from the server session.
+ * - Loads the "Decks" sheet.
+ * - Converts each row into a `Deck` domain object.
+ */
 export const load: PageServerLoad = async ({ locals }): Promise<DecksPageData> => {
   const sessionId = locals.sessionId as string;
 
-  // use the same key you used in setSessionData
+  // Stored via setSessionData(..., 'databaseSheetId', ...)
   const spreadsheetId = getSessionData<string>(sessionId, 'databaseSheetId');
 
   if (!spreadsheetId) {
@@ -25,9 +28,10 @@ export const load: PageServerLoad = async ({ locals }): Promise<DecksPageData> =
     };
   }
 
+  // Note: getSheetsClient is synchronous in your current implementation.
   const sheetsClient = await getSheetsClient(sessionId);
 
-  // Only ask for the "Decks" sheet
+  // Only load the "Decks" sheet
   const [decksSheet] = await loadDatabase(spreadsheetId, sheetsClient, ['Decks']);
 
   if (!Array.isArray(decksSheet) || decksSheet.length < 2) {
@@ -39,13 +43,8 @@ export const load: PageServerLoad = async ({ locals }): Promise<DecksPageData> =
 
   const [headerRow, ...rows] = decksSheet;
 
-  // getDeckJson expects [header, ...rows]; we feed each row separately
-  const decks: Deck[] = rows.map((row) => {
-    const singleDeckData = [headerRow, row];
-    return getDeckJson(singleDeckData);
-  });
+  // getDeckJson expects [headerRow, ...dataRows]; we feed each row separately.
+  const decks: Deck[] = rows.map((row) => getDeckJson([headerRow, row]));
 
-  return {
-    decks
-  };
+  return { decks };
 };
