@@ -224,10 +224,10 @@ export function getDeckJson(spreadsheetData: any): Deck {
         String(h ?? '').toLowerCase().trim()
     );
 
-    const idxName = headers.indexOf('deckname');
-    const idxTarget = headers.indexOf('targetbracket');
+    const idxName = headers.indexOf('name');
+    const idxTarget = headers.indexOf('target bracket');
     const idxSummary = headers.indexOf('summary');
-    const idxArchidekt = headers.indexOf('archidektlink');
+    const idxArchidekt = headers.indexOf('archidekt link');
 
     // For now: take the first data row.
     // If you filter by deck before calling this, that will be the specific deck.
@@ -266,11 +266,11 @@ export function getGamesJson(spreadsheetData: any): Games {
     const idxDeck = headers.indexOf('deck');
     const idxWinner = headers.indexOf('winner');
     const idxFun = headers.indexOf('fun');
-    const idxP2Fun = headers.indexOf('p2fun');
-    const idxP3Fun = headers.indexOf('p3fun');
-    const idxP4Fun = headers.indexOf('p4fun');
+    const idxP2Fun = headers.indexOf('p2 fun');
+    const idxP3Fun = headers.indexOf('p3 fun');
+    const idxP4Fun = headers.indexOf('p4 fun');
     const idxNotes = headers.indexOf('notes');
-    const idxEstBracket = headers.indexOf('estbracket');
+    const idxEstBracket = headers.indexOf('est. pod bracket');
 
     // Local helper to convert to number/null; mirrors the global toNumberOrNull.
     const toNumberOrNull = (value: any): number | null => {

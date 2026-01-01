@@ -9,9 +9,9 @@ export function setSessionData(sessionId: string, key: string, value: unknown) {
     sessionData.set(sessionId, data);
 }
 
-export function getSessionData(sessionId: string, key: string) {
+export function getSessionData<T = unknown>(sessionId: string, key: string): T | undefined {
     const data = sessionData.get(sessionId);
-    return data ? data[key] : undefined;
+    return data ? (data[key] as T) : undefined;
 }
 
 export function hasSessionData(sessionId: string, key: string) {

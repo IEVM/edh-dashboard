@@ -1,28 +1,31 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import type { Stats } from '$lib/data/restructure';
+	import type { DeckStats } from './+page.server';
 
-	type DeckStats = {
-		name: string;
-		games: number;
-		wins: number;
-		losses: number;
-		winRate: number; // 0–100
-		usagePercent: number; // 0–100
+	export let data: {
+		spreadsheetId: string | null;
+		error?: string;
+		stats: Stats | null;
+		deckStats: DeckStats[];
+		targetWinRate: number;
 	};
 
-	export let data: { spreadsheetId: string | null };
+	const spreadsheetId = data.spreadsheetId;
+	let errorMsg: string | null = data.error ?? null;
+	let stats: Stats | null = data.stats;
+	let deckStats: DeckStats[] = data.deckStats;
+	let targetWinRate = data.targetWinRate;
 
-	let spreadsheetId: string | null = data.spreadsheetId;
-	let loading = false;
-	let errorMsg: string | null = null;
-	let deckStats: DeckStats[] = [];
-	let totalGames = 0;
-	let overallWinRate = 0;
-	let targetWinRate = 0;
-	let bestDeck: DeckStats | null = null;
-
-	let baseWidth = 0;
-	let diffWidth = 0;
+	// Derived values for the UI
+	$: totalGames = stats?.totalGames ?? 0;
+	// Stats.winRate is 0..1, component expects 0..100
+	$: overallWinRate = stats ? stats.winRate * 100 : 0;
+	$: bestDeck =
+		deckStats.length > 0
+			? [...deckStats].sort((a, b) => b.winRate - a.winRate)[0]
+			: null;
+	$: baseWidth = Math.min(targetWinRate, overallWinRate);
+	$: diffWidth = overallWinRate - targetWinRate;
 
 	// Colors for the pie segments (reused in legend)
 	const pieColors = [
@@ -39,147 +42,6 @@
 	function fmtPct(x: number): string {
 		return `${x.toFixed(1)}%`;
 	}
-
-	// Winner is a number: 1, 2, 3, 4 ...
-	// Here we assume **you are player 1** for your deck.
-	// Change '1' to '2' etc. if needed.
-	function isWinCell(value: unknown): boolean {
-		if (value == null) return false;
-		const s = String(value).trim();
-		return s === '1';
-	}
-
-	async function loadDashboard() {
-		errorMsg = null;
-		deckStats = [];
-		totalGames = 0;
-		overallWinRate = 0;
-		targetWinRate = 0;
-		bestDeck = null;
-
-		if (!spreadsheetId) {
-			errorMsg = 'No database selected. Go to Settings and choose a spreadsheet.';
-			return;
-		}
-
-		loading = true;
-
-		try {
-			// Read from Games sheet
-			const res = await fetch(
-				`/api/sheets/read?spreadsheetId=${encodeURIComponent(spreadsheetId)}&range=Games!A1:H2000`
-			);
-
-			if (!res.ok) {
-				errorMsg = `Error loading sheet: ${res.status}`;
-				return;
-			}
-
-			const { values } = await res.json();
-
-			if (!values || values.length < 2) {
-				errorMsg = 'No game data found in the Games sheet.';
-				return;
-			}
-
-			const headers: string[] = values[0].map((h: string) =>
-				(h ?? '').toString().trim().toLowerCase()
-			);
-
-			const idxDeck = headers.indexOf('deck');
-			const idxWinner = headers.indexOf('winner');
-			const idxP2 = headers.indexOf('p2 fun');
-			const idxP3 = headers.indexOf('p3 fun');
-			const idxP4 = headers.indexOf('p4 fun');
-
-			if (idxDeck === -1 || idxWinner === -1) {
-				errorMsg =
-					'Could not find the required columns "Deck" and "Winner" in the Games sheet header row.';
-				return;
-			}
-
-			const rows = values.slice(1);
-
-			// Map deck name -> { games, wins }
-			const deckMap = new Map<string, { games: number; wins: number }>();
-			let expectedWins = 0;
-
-			for (const row of rows) {
-				const deckName = (row[idxDeck] ?? '').toString().trim();
-				if (!deckName) continue;
-
-				const winnerCell = row[idxWinner];
-				const won = isWinCell(winnerCell);
-
-				const current = deckMap.get(deckName) ?? { games: 0, wins: 0 };
-				current.games += 1;
-				if (won) current.wins += 1;
-				deckMap.set(deckName, current);
-
-				let players = 1;
-				const valP2 = idxP2 >= 0 ? row[idxP2] : null;
-				const valP3 = idxP3 >= 0 ? row[idxP3] : null;
-				const valP4 = idxP4 >= 0 ? row[idxP4] : null;
-
-				if (valP2 != null && String(valP2).trim() !== '') players += 1;
-				if (valP3 != null && String(valP3).trim() !== '') players += 1;
-				if (valP4 != null && String(valP4).trim() !== '') players += 1;
-
-				expectedWins += 1 / players;
-			}
-
-			if (deckMap.size === 0) {
-				errorMsg = 'No valid game rows found in the Games sheet.';
-				return;
-			}
-
-			const stats: DeckStats[] = [];
-			for (const [name, { games, wins }] of deckMap.entries()) {
-				const losses = Math.max(games - wins, 0);
-				stats.push({
-					name,
-					games,
-					wins,
-					losses,
-					winRate: games > 0 ? (wins / games) * 100 : 0,
-					usagePercent: 0
-				});
-			}
-
-			totalGames = stats.reduce((sum, d) => sum + d.games, 0);
-
-			for (const deck of stats) {
-				deck.usagePercent = totalGames > 0 ? (deck.games / totalGames) * 100 : 0;
-			}
-
-			// Sort decks by games played (usage)
-			deckStats = stats.sort((a, b) => b.games - a.games);
-
-			const totalWins = deckStats.reduce((sum, d) => sum + d.wins, 0);
-			overallWinRate = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
-
-			targetWinRate = totalGames > 0 ? (expectedWins / totalGames) * 100 : 0;
-
-			bestDeck = deckStats.length > 0 ? [...deckStats].sort((a, b) => b.winRate - a.winRate)[0] : null;
-
-			baseWidth = Math.min(targetWinRate, overallWinRate);
-			diffWidth = overallWinRate -targetWinRate;
-
-		} catch (err) {
-			console.error(err);
-			errorMsg = 'Unexpected error while loading dashboard.';
-		} finally {
-			loading = false;
-		}
-	}
-
-	onMount(() => {
-		if (spreadsheetId) {
-			loadDashboard();
-		} else {
-			errorMsg = 'No database selected. Go to Settings and choose a spreadsheet.';
-		}
-	});
 
 	// --- Pie chart using conic-gradient --- //
 	$: pieGradient = (() => {
@@ -209,12 +71,15 @@
 				Stats generated from the <strong>Games</strong> sheet in your selected database.
 			</p>
 		</div>
+
+		<!-- Simple full-page refresh; data is loaded server-side -->
 		<button
 			class="btn variant-outlined-primary-500 text-sm"
-			on:click={loadDashboard}
-			disabled={loading}
+			type="button"
+			on:click={() => location.reload()}
+			disabled={!spreadsheetId}
 		>
-			{loading ? 'Refreshing…' : 'Refresh'}
+			Refresh
 		</button>
 	</div>
 
@@ -224,25 +89,39 @@
 		</div>
 	{/if}
 
-	{#if deckStats.length}
+	{#if !errorMsg && !spreadsheetId}
+		<div class="p-3 rounded-lg bg-surface-800 border border-surface-700/60 text-surface-200 text-sm">
+			No database selected. Go to <strong>Settings</strong> and choose a spreadsheet.
+		</div>
+	{/if}
+
+	{#if !errorMsg && deckStats.length}
 		<!-- 1) PIE CHART – Deck usage by number of games -->
 		<div class="grid gap-6 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)] items-center">
 			<div class="flex flex-col items-center gap-2">
 				<div
-					class="w-48 h-48 rounded-full shadow-lg shadow-black/40 border border-surface-700/60"
+					class="w-48 h-48 rounded-full border border-surface-600 shadow-inner"
 					style={`background: conic-gradient(${pieGradient});`}
 				/>
-				<div class="text-xs text-surface-400">Deck usage by games played</div>
+				<p class="text-xs text-surface-300">
+					Each segment shows how many games a deck has played.
+				</p>
 			</div>
 
-			<!-- Legend -->
-			<div class="space-y-2">
-				<h2 class="text-sm font-semibold text-surface-200">Deck usage</h2>
-				<ul class="space-y-1 text-xs">
+			<div class="space-y-3">
+				<div class="flex items-center justify-between text-xs text-surface-400 uppercase tracking-wide">
+					<span>Deck</span>
+					<span class="flex gap-6">
+						<span class="w-12 text-right">Games</span>
+						<span class="w-16 text-right">Winrate</span>
+						<span class="w-16 text-right">Usage</span>
+					</span>
+				</div>
+				<ul class="space-y-2">
 					{#each deckStats as d, i}
-						<li class="flex items-center gap-2">
+						<li class="flex items-center gap-3 text-sm">
 							<span
-								class="w-3 h-3 rounded-sm"
+								class="inline-block w-3 h-3 rounded-full"
 								style={`background: ${pieColors[i % pieColors.length]}`}
 							/>
 							<span class="truncate">{d.name}</span>
@@ -257,90 +136,127 @@
 
 		<!-- 2) Summary cards -->
 		<div class="grid gap-4 md:grid-cols-3">
-			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-1">
-				<div class="text-xs uppercase tracking-wide text-surface-400">Total Games Logged</div>
-				<div class="text-2xl font-semibold">{totalGames}</div>
-				<div class="text-xs text-surface-400">
-					Across {deckStats.length} deck{deckStats.length === 1 ? '' : 's'}
-				</div>
+			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm">
+				<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">
+					Total games
+				</p>
+				<p class="text-3xl font-semibold">{totalGames}</p>
+				<p class="text-xs text-surface-400 mt-1">
+					Number of games recorded in the <strong>Games</strong> sheet.
+				</p>
 			</div>
 
-			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-2">
-				<div class="text-xs uppercase tracking-wide text-surface-400">
-					Overall Win Rate vs Fair Target
-				</div>
-				<div class="flex items-baseline gap-3">
-					<div class="text-2xl font-semibold">
-						{fmtPct(overallWinRate)}
-					</div>
-					<div class="text-xs text-surface-400">
-						Fair target: {fmtPct(targetWinRate)}
-					</div>
-				</div>
-				<div class="mt-1 h-2 rounded-full bg-surface-700/70 overflow-hidden flex">
-					<!-- shared (fair) part -->
-					<div class="h-full bg-primary-500" style={`width: ${baseWidth}%;`} />
-					<!-- difference segment (above or below fair) -->
-					{#if diffWidth > 0}
-						<div
-							class="h-full bg-error-500"
-							style={`width: ${diffWidth}%;`}
-						/>
-					{/if}
-				</div>
-				<div class="text-xs text-surface-400">
-					{#if diffWidth > 0}
-						You&#39;re winning {diffWidth.toFixed(1)} percentage points more than a perfectly fair deck.
-					{:else if diffWidth < 0}
-						You&#39;re winning {Math.abs(diffWidth).toFixed(1)} percentage points less than a fair deck.
-					{:else}
-						You&#39;re exactly at the fair win rate.
-					{/if}
-				</div>
+			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm">
+				<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">
+					Overall win rate
+				</p>
+				<p class="text-3xl font-semibold">
+					{fmtPct(overallWinRate)}
+				</p>
+				<p class="text-xs text-surface-400 mt-1">
+					Percentage of games you won with your decks.
+				</p>
 			</div>
 
-			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-1">
-				<div class="text-xs uppercase tracking-wide text-surface-400">Best Deck (by win %)</div>
-				{#if bestDeck}
-					<div class="text-base font-semibold">{bestDeck.name}</div>
-					<div class="text-xs text-surface-300">
-						{bestDeck.wins}–{bestDeck.losses} ({fmtPct(bestDeck.winRate)})
-					</div>
-				{:else}
-					<div class="text-sm text-surface-400">No games yet.</div>
-				{/if}
+			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm">
+				<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">
+					Fairness target
+				</p>
+				<p class="text-3xl font-semibold">
+					{fmtPct(targetWinRate)}
+				</p>
+				<p class="text-xs text-surface-400 mt-1">
+					Expected win rate if every game was perfectly fair.
+				</p>
 			</div>
 		</div>
 
-		<!-- 3) Detailed table -->
-		<div class="rounded-xl overflow-hidden border border-surface-700/60 shadow-lg shadow-black/20">
+		<!-- 3) Winrate vs target bar -->
+		<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm space-y-3">
+			<div class="flex items-center justify-between text-xs text-surface-400 uppercase tracking-wide">
+				<span>Overall vs target</span>
+				<span>{fmtPct(overallWinRate)} / {fmtPct(targetWinRate)}</span>
+			</div>
+			<div class="w-full h-4 rounded-full bg-surface-900 overflow-hidden flex">
+				<div
+					class="h-full bg-primary-500"
+					style={`width: ${Math.max(0, baseWidth)}%`}
+				/>
+				{#if diffWidth !== 0}
+					<div
+						class="h-full"
+						style={`
+							width: ${Math.abs(diffWidth)}%;
+							background: ${diffWidth > 0 ? 'hsl(120, 60%, 45%)' : 'hsl(0, 70%, 55%)'};
+						`}
+					/>
+				{/if}
+			</div>
+			<p class="text-xs text-surface-400">
+				Positive difference means you are winning more than the fairness target; negative means less.
+			</p>
+		</div>
+
+		<!-- 4) Best deck highlight -->
+		{#if bestDeck}
+			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+				<div>
+					<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">
+						Best deck by win rate
+					</p>
+					<p class="text-xl font-semibold">{bestDeck.name}</p>
+					<p class="text-xs text-surface-400 mt-1">
+						{bestDeck.games} game{bestDeck.games === 1 ? '' : 's'} played.
+					</p>
+				</div>
+				<div class="flex flex-col items-end">
+					<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">
+						Win rate
+					</p>
+					<p class="text-2xl font-semibold">
+						{fmtPct(bestDeck.winRate)}
+					</p>
+				</div>
+			</div>
+		{/if}
+
+		<!-- 5) Detailed table -->
+		<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm">
+			<div class="flex items-center justify-between mb-3">
+				<p class="text-xs text-surface-400 uppercase tracking-wide">
+					Deck details
+				</p>
+				<p class="text-xs text-surface-400">
+					Sorted by games played.
+				</p>
+			</div>
 			<table class="w-full text-sm">
-				<thead class="bg-surface-800 border-b border-surface-700/60">
+				<thead class="text-xs text-surface-400 border-b border-surface-700/60">
 					<tr>
-						<th class="px-4 py-3 text-left">Deck</th>
-						<th class="px-4 py-3 text-right">Games</th>
-						<th class="px-4 py-3 text-right">Wins</th>
-						<th class="px-4 py-3 text-right">Losses</th>
-						<th class="px-4 py-3 text-right">Win %</th>
-						<th class="px-4 py-3 text-left w-48">Usage</th>
+						<th class="py-2 text-left">Deck</th>
+						<th class="py-2 text-right">Games</th>
+						<th class="py-2 text-right">Wins</th>
+						<th class="py-2 text-right">Losses</th>
+						<th class="py-2 text-right">Win rate</th>
+						<th class="py-2 text-right">Usage</th>
 					</tr>
 				</thead>
 				<tbody>
 					{#each deckStats as d}
-						<tr class="bg-surface-900 hover:bg-surface-800/40 border-b border-surface-800/60">
-							<td class="px-4 py-2"
-								><a href="dashboard/{encodeURIComponent(d.name)}">{d.name}</a></td
-							>
-							<td class="px-4 py-2 text-right">{d.games}</td>
-							<td class="px-4 py-2 text-right">{d.wins}</td>
-							<td class="px-4 py-2 text-right">{d.losses}</td>
-							<td class="px-4 py-2 text-right">{fmtPct(d.winRate)}</td>
-							<td class="px-4 py-2">
-								<div class="flex items-center gap-2">
-									<div class="flex-1 h-2 rounded-full bg-surface-700 overflow-hidden">
+						<tr class="border-t border-surface-800/60">
+							<td class="py-2 pr-2">
+								<span class="truncate block max-w-xs">{d.name}</span>
+							</td>
+							<td class="py-2 text-right">{d.games}</td>
+							<td class="py-2 text-right">{d.wins}</td>
+							<td class="py-2 text-right">{d.losses}</td>
+							<td class="py-2 text-right">{fmtPct(d.winRate)}</td>
+							<td class="py-2 text-right">
+								<div class="flex items-center justify-end gap-2">
+									<div class="w-16 h-1.5 bg-surface-900 rounded-full overflow-hidden">
 										<div
 											class="h-full bg-primary-500"
-											style={`width: ${Math.min(d.usagePercent, 100)}%`}
+											style={`width: ${d.usagePercent.toFixed(1)}%`}
 										/>
 									</div>
 									<span class="text-xs text-surface-300 w-12 text-right">

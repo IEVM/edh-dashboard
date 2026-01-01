@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
 
   export let archidektUrl: string | null = null;
-  export let summary: string = '';
+  export let summary: string | null = "";
   export let deckName: string = '';
 
   let deckId: string | null = null;
@@ -84,7 +85,7 @@
   });
 
   // Reload when URL changes
-  $: if (archidektUrl) {
+  $: if (browser && archidektUrl) {
     // Don’t spam the API if the ID didn’t change
     const newId = extractDeckId(archidektUrl);
     if (newId && newId !== deckId) {
@@ -108,7 +109,7 @@
       </span>
       {#if archidektUrl && archidektUrl != '-'}
         <a href="/dashboard/{encodeURIComponent(deckName)}">
-            <img src={image} alt="deckName">
+            <img src={image} alt={deckName}>
         </a>
         <a
           href={archidektUrl}
