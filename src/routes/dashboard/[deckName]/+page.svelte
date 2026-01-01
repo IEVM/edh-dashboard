@@ -1,5 +1,6 @@
 <script lang="ts">
 	import CommanderPreview from '$lib/components/CommanderPreview.svelte';
+	import WRBar from '$lib/components/WRBar.svelte';
 	import type { Deck } from '$lib/data/restructure';
 
 	export let data: {
@@ -25,11 +26,10 @@
 	/**
 	 * Formats a percentage value in 0–100 with a % sign.
 	 *
-	 * Note: If you pass a 0–1 win rate, multiply by 100 before calling.
 	 */
 	function fmtPct(percent: number | null | undefined, digits = 1): string {
 		if (percent == null || Number.isNaN(percent)) return '-';
-		return `${percent.toFixed(digits)}%`;
+		return `${(100 * percent).toFixed(digits)}%`;
 	}
 
 	/**
@@ -37,23 +37,24 @@
 	 *
 	 * Current assumption:
 	 * - 1 => "Win"
-	 * - 0 => "Loss"
+	 * - 2, 3, 4 => "Loss"
 	 * - null/other => "–"
 	 *
-	 * (If your sheet stores "winner seat 1–4", this should be updated.)
 	 */
 	function resultLabel(winner: number | null | undefined): string {
+		if (!winner) return '-';
 		if (winner === 1) return 'Win';
-		if (winner === 0) return 'Loss';
-		return '–';
+		if (winner >= 2 && winner <= 4) return 'Loss';
+		return '-';
 	}
 
 	/**
 	 * CSS class to color the result text.
 	 */
 	function resultClass(winner: number | null | undefined): string {
+		if (!winner) return 'text-surface-300';
 		if (winner === 1) return 'text-success-400';
-		if (winner === 0) return 'text-error-400';
+		if (winner >= 2 && winner <= 4) return 'text-error-400';
 		return 'text-surface-300';
 	}
 
@@ -141,7 +142,7 @@
 				<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-1">
 					<div class="text-xs uppercase tracking-wide text-surface-400">Record</div>
 					<div class="text-lg font-semibold">
-						{deck.stats.wins}–{deck.stats.losses}
+						{deck.stats.wins} - {deck.stats.losses}
 					</div>
 					<div class="text-xs text-surface-400">
 						{fmtPct(deck.stats.winRate)}
@@ -167,42 +168,7 @@
 					</div>
 				</div>
 
-				<div
-					class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-2 md:col-span-2"
-				>
-					<div class="text-xs uppercase tracking-wide text-surface-400">Win rate vs fair</div>
-					<div class="w-full h-3 rounded-full bg-surface-900 overflow-hidden flex">
-						<!-- Base: fair expected win rate -->
-						<div
-							class="h-full bg-primary-500"
-							style={`width: ${Math.max(0, deck.stats.expectedWinrate)}%;`}
-						/>
-						{#if deck.stats.winRate - deck.stats.expectedWinrate > 0}
-							<!-- Overperforming -->
-							<div
-								class="h-full bg-success-500"
-								style={`width: ${deck.stats.winRate - deck.stats.expectedWinrate}%;`}
-							/>
-						{:else if deck.stats.winRate - deck.stats.expectedWinrate < 0}
-							<!-- Underperforming -->
-							<div
-								class="h-full bg-error-500"
-								style={`width: ${Math.abs(deck.stats.winRate - deck.stats.expectedWinrate)}%;`}
-							/>
-						{/if}
-					</div>
-					<div class="text-xs text-surface-400">
-						{#if deck.stats.winRate - deck.stats.expectedWinrate > 0}
-							You're winning {(deck.stats.winRate - deck.stats.expectedWinrate).toFixed(1)} percentage
-							points more than a perfectly fair deck.
-						{:else if deck.stats.winRate - deck.stats.expectedWinrate < 0}
-							You're winning {Math.abs(deck.stats.winRate - deck.stats.expectedWinrate).toFixed(1)} percentage
-							points less than a fair deck.
-						{:else}
-							You're exactly at the fair win rate.
-						{/if}
-					</div>
-				</div>
+				<WRBar winRate={deck.stats.winRate} expectedWinrate={deck.stats.expectedWinrate}></WRBar>
 			</div>
 		{:else}
 			<p class="text-sm text-surface-400">No games logged yet for this deck.</p>
@@ -245,13 +211,13 @@
 											{resultLabel(g.winner)}
 										</td>
 										<td class="px-3 py-2 text-right text-surface-100">
-											{g.fun == null ? '–' : g.fun.toFixed(1)}
+											{g.fun == null ? '-' : g.fun.toFixed(1)}
 										</td>
 										<td class="px-3 py-2 text-right text-surface-100">
 											{avgFunOthers(g)}
 										</td>
 										<td class="px-3 py-2 text-right text-surface-100">
-											{g.estBracket == null ? '–' : g.estBracket.toFixed(1)}
+											{g.estBracket == null ? '-' : g.estBracket.toFixed(1)}
 										</td>
 										<td class="px-3 py-2 text-xs text-surface-300 max-w-xs truncate">
 											{g.notes ?? ''}

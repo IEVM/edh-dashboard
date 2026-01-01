@@ -1,4 +1,5 @@
 <script lang="ts">
+	import WRBar from '$lib/components/WRBar.svelte';
 	import type { Stats } from '$lib/data/restructure';
 	import type { DeckStats } from './+page.server';
 
@@ -24,10 +25,6 @@
 
 	$: bestDeck =
 		deckStats.length > 0 ? [...deckStats].sort((a, b) => b.winRate - a.winRate)[0] : null;
-
-	// Bar segments (in percent, 0..100)
-	$: baseWidth = Math.min(targetWinRate, overallWinRate);
-	$: diffWidth = overallWinRate - targetWinRate;
 
 	// Colors for the pie segments (reused in legend)
 	const pieColors = [
@@ -166,32 +163,9 @@
 		</div>
 
 		<!-- 3) Winrate vs target bar -->
-		<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm space-y-3">
-			<div
-				class="flex items-center justify-between text-xs text-surface-400 uppercase tracking-wide"
-			>
-				<span>Overall vs target</span>
-				<span>{fmtPct(overallWinRate)} / {fmtPct(targetWinRate)}</span>
-			</div>
-
-			<div class="w-full h-4 rounded-full bg-surface-900 overflow-hidden flex">
-				<div class="h-full bg-primary-500" style={`width: ${Math.max(0, baseWidth)}%`} />
-				{#if diffWidth !== 0}
-					<div
-						class="h-full"
-						style={`
-              width: ${Math.abs(diffWidth)}%;
-              background: ${diffWidth > 0 ? 'hsl(120, 60%, 45%)' : 'hsl(0, 70%, 55%)'};
-            `}
-					/>
-				{/if}
-			</div>
-
-			<p class="text-xs text-surface-400">
-				Positive difference means you are winning more than the fairness target; negative means
-				less.
-			</p>
-		</div>
+		{#if stats}
+			<WRBar winRate={stats.winRate} expectedWinrate={stats.expectedWinrate}></WRBar>
+		{/if}
 
 		<!-- 4) Best deck highlight -->
 		{#if bestDeck}

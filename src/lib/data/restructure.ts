@@ -279,7 +279,7 @@ export function statsFromGames(games: Games): Stats {
 
   for (const g of games) {
     if (g.winner === 1) wins++;
-    else if (g.winner === 0) losses++;
+    else if (g.winner && g.winner >= 2 && g.winner <= 4) losses++;
 
     if (g.fun !== null) {
       funSelfValues.push(g.fun);
