@@ -111,17 +111,9 @@ Danach im Browser öffnen (typisch SvelteKit dev URL):
 
 ---
 
-## Contributing
-
-Prototype-Phase, aber Feedback/Issues sind willkommen.  
-Wenn du beitragen willst: Fork → Branch → PR.
-
----
-
 ## License
 
-Geplant: **MIT License** (jeder darf’s nutzen/ändern/verteilen).  
-*(Sobald `LICENSE` hinzugefügt ist, gilt das offiziell.)*
+**MIT License**  
 
 ---
 
