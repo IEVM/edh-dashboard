@@ -3,13 +3,13 @@
 
 	import { Avatar } from '@skeletonlabs/skeleton';
 
-	export let data: { isAuthenticated: boolean; currentPath: string };
+	export let data: { isAuthenticated: boolean; hasDatabase: boolean; currentPath: string };
 
 	const navItems = [
 		{ href: '/', label: 'Home' },
-		{ href: '/decks', label: 'Decks' },
-		{ href: '/settings', label: 'Settings' },
-		{ href: '/dashboard', label: 'Dashboard' },
+		{ href: '/decks', label: 'Decks', requiresAuth: true, requiresDb: true },
+		{ href: '/settings', label: 'Settings', requiresAuth: true },
+		{ href: '/dashboard', label: 'Dashboard', requiresAuth: true, requiresDb: true },
 		{ href: '/guide', label: 'Guide' }
 	];
 
@@ -28,15 +28,17 @@
 
 			<nav class="flex items-center gap-4">
 				{#each navItems as item}
-					<a
-						href={item.href}
-						class="text-sm pb-1
+					{#if (!item.requiresAuth || data.isAuthenticated) && (!item.requiresDb || data.hasDatabase)}
+						<a
+							href={item.href}
+							class="text-sm pb-1
               {data.currentPath === item.href
-							? 'text-primary-300 border-b-2 border-primary-400'
-							: 'text-surface-200 hover:text-primary-300'}"
-					>
-						{item.label}
-					</a>
+								? 'text-primary-300 border-b-2 border-primary-400'
+								: 'text-surface-200 hover:text-primary-300'}"
+						>
+							{item.label}
+						</a>
+					{/if}
 				{/each}
 			</nav>
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { invalidateAll } from '$app/navigation';
   // Data comes from +page.server.ts
   export let data: { spreadsheetId: string | null };
 
@@ -67,6 +68,7 @@
       body: JSON.stringify({ spreadsheetId })
     });
 
+    await invalidateAll();
     alert('Database updated!');
   }
 </script>

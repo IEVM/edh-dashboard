@@ -43,6 +43,10 @@
 		return `${x.toFixed(1)}%`;
 	}
 
+	function deckHref(name: string) {
+		return `/dashboard/${encodeURIComponent(name)}`;
+	}
+
 	// Pie chart using conic-gradient
 	$: pieGradient = (() => {
 		if (!deckStats.length || totalGames === 0) return '';
@@ -127,7 +131,12 @@
 								class="inline-block w-3 h-3 rounded-full"
 								style={`background: ${pieColors[i % pieColors.length]}`}
 							/>
-							<span class="truncate">{d.name}</span>
+							<a
+								class="truncate text-primary-300 hover:text-primary-200 underline underline-offset-2"
+								href={deckHref(d.name)}
+							>
+								{d.name}
+							</a>
 							<span class="ml-auto text-surface-300">
 								{d.games} game{d.games === 1 ? '' : 's'}
 							</span>
@@ -174,7 +183,14 @@
 			>
 				<div>
 					<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">Best deck by win rate</p>
-					<p class="text-xl font-semibold">{bestDeck.name}</p>
+					<p class="text-xl font-semibold">
+						<a
+							class="text-primary-300 hover:text-primary-200 underline underline-offset-2"
+							href={deckHref(bestDeck.name)}
+						>
+							{bestDeck.name}
+						</a>
+					</p>
 					<p class="text-xs text-surface-400 mt-1">
 						{bestDeck.games} game{bestDeck.games === 1 ? '' : 's'} played.
 					</p>
@@ -208,7 +224,12 @@
 					{#each deckStats as d}
 						<tr class="border-t border-surface-800/60">
 							<td class="py-2 pr-2">
-								<span class="truncate block max-w-xs">{d.name}</span>
+								<a
+									class="truncate block max-w-xs text-primary-300 hover:text-primary-200 underline underline-offset-2"
+									href={deckHref(d.name)}
+								>
+									{d.name}
+								</a>
 							</td>
 							<td class="py-2 text-right">{d.games}</td>
 							<td class="py-2 text-right">{d.wins}</td>
