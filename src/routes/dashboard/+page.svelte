@@ -68,7 +68,7 @@
 
 <div class="space-y-8">
 	<!-- Header -->
-	<div class="flex items-center justify-between gap-4">
+	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 		<div>
 			<h1 class="text-3xl font-semibold">EDH Dashboard</h1>
 			<p class="text-surface-300 text-sm">
@@ -78,7 +78,7 @@
 
 		<!-- Simple full-page refresh; data is loaded server-side -->
 		<button
-			class="btn variant-outlined-primary-500 text-sm"
+			class="btn variant-outlined-primary-500 text-sm self-start sm:self-auto"
 			type="button"
 			on:click={() => location.reload()}
 			disabled={!spreadsheetId}
@@ -209,7 +209,8 @@
 				<p class="text-xs text-surface-400">Sorted by games played.</p>
 			</div>
 
-			<table class="w-full text-sm">
+			<div class="overflow-x-auto -mx-2 sm:mx-0">
+				<table class="w-full text-sm min-w-[640px]">
 				<thead class="text-xs text-surface-400 border-b border-surface-700/60">
 					<tr>
 						<th class="py-2 text-left">Deck</th>
@@ -251,7 +252,8 @@
 						</tr>
 					{/each}
 				</tbody>
-			</table>
+				</table>
+			</div>
 		</div>
 	{/if}
 </div>

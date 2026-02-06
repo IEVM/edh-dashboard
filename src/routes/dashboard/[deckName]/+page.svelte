@@ -95,7 +95,7 @@
 		</p>
 	{:else}
 		<!-- Header -->
-		<div class="flex items-start justify-between gap-4">
+		<div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
 			<div class="space-y-2">
 				<h1 class="text-3xl font-semibold">{deck.deckName}</h1>
 

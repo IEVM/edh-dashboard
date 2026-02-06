@@ -26,7 +26,7 @@
 
 	<!-- Deck previews -->
 	{#if decks.length}
-		<div class="flex gap-4 flex-wrap">
+		<div class="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 justify-items-center">
 			{#each decks as deck}
 				<CommanderPreview
 					deckName={deck.deckName}
