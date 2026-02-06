@@ -109,6 +109,26 @@ Danach im Browser öffnen (typisch SvelteKit dev URL):
 - CI/CD (GitHub Actions)
 - Polishing: UX rund um Sheet-Setup + Fehlerbehandlung
 
+## CI/CD
+
+Auf Pull Requests und auf Pushes nach main läuft CI mit npm ci, optionalem Format Check, optionalem Lint, optionalem Typecheck, Tests und Build.
+Pull Requests deployen eine Cloudflare Pages Preview und posten die Preview URL im PR.
+Pushes nach main deployen in Cloudflare Pages Production.
+
+Umgebungsvariablen
+- Google OAuth Secrets liegen in den Cloudflare Pages Umgebungen Preview und Production
+- GitHub Environments enthalten nur die Cloudflare Deploy Credentials und nur nicht sensible Build Time Variablen falls nötig
+
+Erforderliche GitHub Environment Secrets
+- Preview Environment
+- CLOUDFLARE_API_TOKEN für Cloudflare API Zugriff
+- CLOUDFLARE_ACCOUNT_ID für den Cloudflare Account
+- CLOUDFLARE_PAGES_PROJECT_NAME für das Pages Projekt
+- Production Environment
+- CLOUDFLARE_API_TOKEN für Cloudflare API Zugriff
+- CLOUDFLARE_ACCOUNT_ID für den Cloudflare Account
+- CLOUDFLARE_PAGES_PROJECT_NAME für das Pages Projekt
+
 ---
 
 ## License
