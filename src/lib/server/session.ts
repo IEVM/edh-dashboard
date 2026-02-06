@@ -1,21 +1,23 @@
+import { kvGet, kvSet } from './kv';
+
 type SessionData = Record<string, unknown>;
 
-// Simple in-memory session storage (per user session)
-const sessionData = new Map<string, SessionData>();
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
+const sessionKey = (sessionId: string) => `session:${sessionId}`;
 
 /**
  * Stores a value for a given session under a key.
  *
- * Note: This is in-memory only. Data is lost on server restart and won't be shared across instances.
+ * Note: Stored in KV when configured, with an in-memory fallback for local dev.
  *
  * @param sessionId User/session identifier
  * @param key       Property name within the session object
  * @param value     Any serializable value you want to keep for the session lifetime
  */
-export function setSessionData(sessionId: string, key: string, value: unknown) {
-  const data = sessionData.get(sessionId) ?? {};
+export async function setSessionData(sessionId: string, key: string, value: unknown) {
+  const data = (await kvGet<SessionData>(sessionKey(sessionId))) ?? {};
   data[key] = value;
-  sessionData.set(sessionId, data);
+  await kvSet(sessionKey(sessionId), data, SESSION_TTL_SECONDS);
 }
 
 /**
@@ -25,8 +27,11 @@ export function setSessionData(sessionId: string, key: string, value: unknown) {
  * @param key       Property name within the session object
  * @returns         The stored value (typed via generic), or undefined if missing
  */
-export function getSessionData<T = unknown>(sessionId: string, key: string): T | undefined {
-  const data = sessionData.get(sessionId);
+export async function getSessionData<T = unknown>(
+  sessionId: string,
+  key: string
+): Promise<T | undefined> {
+  const data = await kvGet<SessionData>(sessionKey(sessionId));
   return data ? (data[key] as T) : undefined;
 }
 
@@ -36,7 +41,7 @@ export function getSessionData<T = unknown>(sessionId: string, key: string): T |
  * @param sessionId User/session identifier
  * @param key       Property name within the session object
  */
-export function hasSessionData(sessionId: string, key: string) {
-  const data = sessionData.get(sessionId);
+export async function hasSessionData(sessionId: string, key: string) {
+  const data = await kvGet<SessionData>(sessionKey(sessionId));
   return data ? key in data : false;
 }

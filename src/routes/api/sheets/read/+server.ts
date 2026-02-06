@@ -12,7 +12,7 @@ import { getSheetsClient, hasTokens } from '$lib/server/google';
 export async function GET(event: RequestEvent) {
   const sessionId = event.locals.sessionId;
 
-  if (!hasTokens(sessionId)) {
+  if (!(await hasTokens(sessionId))) {
     throw error(401, 'Not authenticated with Google');
   }
 
@@ -23,7 +23,7 @@ export async function GET(event: RequestEvent) {
     throw error(400, 'Missing spreadsheetId query parameter');
   }
 
-  const sheets = getSheetsClient(sessionId);
+  const sheets = await getSheetsClient(sessionId);
 
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,

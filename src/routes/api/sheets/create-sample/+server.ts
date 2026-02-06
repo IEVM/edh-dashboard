@@ -66,10 +66,10 @@ function randInt(min: number, max: number): number {
  *  - Data validation rules for brackets, winner, fun ratings, etc.
  */
 export const POST: RequestHandler = async ({ locals }) => {
-  const tokens = getTokens(locals.sessionId);
+  const tokens = await getTokens(locals.sessionId);
   if (!tokens) return new Response('Not authenticated', { status: 401 });
 
-  const sheets = getSheetsClient(locals.sessionId);
+  const sheets = await getSheetsClient(locals.sessionId);
 
   // 1) Create spreadsheet with Decks + Games
   const createRes = await sheets.spreadsheets.create({

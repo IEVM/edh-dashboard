@@ -117,6 +117,7 @@ Pushes nach main deployen in Vercel Production.
 
 Umgebungsvariablen
 - Google OAuth Secrets liegen in den Vercel Umgebungen Preview und Production
+- Upstash Redis Env Vars liegen in den Vercel Umgebungen Preview und Production
 - GitHub Environments enthalten nur die Vercel Deploy Credentials und nur nicht sensible Build Time Variablen falls nötig
 
 Erforderliche GitHub Environment Secrets
@@ -128,6 +129,10 @@ Erforderliche GitHub Environment Secrets
 - VERCEL_TOKEN für Vercel API Zugriff
 - VERCEL_ORG_ID für die Vercel Organisation
 - VERCEL_PROJECT_ID für das Vercel Projekt
+
+Upstash Redis Environment Variablen in Vercel
+- UPSTASH_REDIS_REST_URL
+- UPSTASH_REDIS_REST_TOKEN
 
 ---
 

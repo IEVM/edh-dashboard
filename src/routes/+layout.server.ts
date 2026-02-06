@@ -8,6 +8,6 @@ import { hasTokens } from '$lib/server/google';
  * session has Google OAuth tokens stored.
  */
 export const load: LayoutServerLoad = async ({ locals }) => {
-  const isAuthenticated = hasTokens(locals.sessionId);
+  const isAuthenticated = await hasTokens(locals.sessionId);
   return { isAuthenticated };
 };

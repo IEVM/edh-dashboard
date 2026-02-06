@@ -14,7 +14,7 @@ import { GET } from '../../src/routes/api/drive/list-spreadsheets/+server';
 
 describe('GET /api/drive/list-spreadsheets', () => {
   it('returns 401 when not authenticated', async () => {
-    mocks.getTokens.mockReturnValueOnce(undefined);
+    mocks.getTokens.mockResolvedValueOnce(undefined);
 
     const res = await GET({ locals: { sessionId: 's1' } } as any);
 
@@ -22,8 +22,8 @@ describe('GET /api/drive/list-spreadsheets', () => {
   });
 
   it('returns spreadsheet list when authenticated', async () => {
-    mocks.getTokens.mockReturnValueOnce({ access_token: 'token' });
-    mocks.getDriveClient.mockReturnValueOnce({
+    mocks.getTokens.mockResolvedValueOnce({ access_token: 'token' });
+    mocks.getDriveClient.mockResolvedValueOnce({
       files: {
         list: vi.fn().mockResolvedValue({
           data: { files: [{ id: 'sheet-1', name: 'EDH DB' }] }

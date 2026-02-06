@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import type { Credentials } from 'google-auth-library';
 import { env } from '$env/dynamic/private';
+import { kvGet, kvSet } from './kv';
 
 const SCOPES = [
   'openid',
@@ -11,7 +12,8 @@ const SCOPES = [
   'https://www.googleapis.com/auth/drive.file'
 ];
 
-const tokenStore = new Map<string, Credentials>();
+const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
+const tokensKey = (sessionId: string) => `google:tokens:${sessionId}`;
 
 /**
  * Creates a new OAuth2 client configured with this app's Google credentials.
@@ -53,7 +55,7 @@ export async function handleAuthCode(sessionId: string, code: string) {
   const oauth2Client = createOAuthClient();
   const { tokens } = await oauth2Client.getToken(code);
 
-  tokenStore.set(sessionId, tokens);
+  await kvSet(tokensKey(sessionId), tokens, TOKEN_TTL_SECONDS);
 
   return tokens;
 }
@@ -62,18 +64,19 @@ export async function handleAuthCode(sessionId: string, code: string) {
  * Stores a token bundle for a given sessionId.
  * Useful if you refresh tokens elsewhere and want to persist the updated set.
  */
-export function saveTokens(sessionId: string, tokens: Credentials) {
-  tokenStore.set(sessionId, tokens);
+export async function saveTokens(sessionId: string, tokens: Credentials) {
+  await kvSet(tokensKey(sessionId), tokens, TOKEN_TTL_SECONDS);
 }
 
 /** @returns tokens for a session or undefined if not authenticated. */
-export function getTokens(sessionId: string) {
-  return tokenStore.get(sessionId);
+export async function getTokens(sessionId: string) {
+  return await kvGet<Credentials>(tokensKey(sessionId));
 }
 
 /** @returns true if we have tokens stored for this session. */
-export function hasTokens(sessionId: string) {
-  return tokenStore.has(sessionId);
+export async function hasTokens(sessionId: string) {
+  const tokens = await getTokens(sessionId);
+  return !!tokens;
 }
 
 /**
@@ -81,8 +84,8 @@ export function hasTokens(sessionId: string) {
  *
  * @throws Error if no tokens are stored for this sessionId.
  */
-export function getSheetsClient(sessionId: string) {
-  const tokens = tokenStore.get(sessionId);
+export async function getSheetsClient(sessionId: string) {
+  const tokens = await getTokens(sessionId);
   if (!tokens) {
     throw new Error('Not authenticated');
   }
@@ -98,8 +101,8 @@ export function getSheetsClient(sessionId: string) {
  *
  * @throws Error if no tokens are stored for this sessionId.
  */
-export function getDriveClient(sessionId: string) {
-  const tokens = tokenStore.get(sessionId);
+export async function getDriveClient(sessionId: string) {
+  const tokens = await getTokens(sessionId);
   if (!tokens) {
     throw new Error('Not authenticated');
   }

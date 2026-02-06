@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   getAuthUrl: vi.fn(() => 'https://accounts.google.com/o/oauth2/v2/auth'),
-  handleAuthCode: vi.fn()
+  handleAuthCode: vi.fn().mockResolvedValue(undefined)
 }));
 
 vi.mock('$lib/server/google', () => ({

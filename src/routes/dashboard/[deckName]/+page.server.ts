@@ -27,7 +27,7 @@ type PageData = {
  */
 export const load: PageServerLoad = async ({ locals, params }): Promise<PageData> => {
   const sessionId = locals.sessionId as string;
-  const spreadsheetId = getSessionData<string>(sessionId, 'databaseSheetId');
+  const spreadsheetId = await getSessionData<string>(sessionId, 'databaseSheetId');
 
   // Route params may already be decoded by SvelteKit; this keeps behavior explicit.
   const deckNameParam = decodeURIComponent(params.deckName);

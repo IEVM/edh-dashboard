@@ -23,6 +23,7 @@ describe('POST /api/settings/set-database', () => {
   });
 
   it('stores spreadsheetId in session and returns ok', async () => {
+    mocks.setSessionData.mockResolvedValueOnce(undefined);
     const request = new Request('http://localhost/api/settings/set-database', {
       method: 'POST',
       body: JSON.stringify({ spreadsheetId: 'sheet-123' })

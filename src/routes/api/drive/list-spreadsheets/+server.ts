@@ -8,10 +8,10 @@ import { getDriveClient, getTokens } from '$lib/server/google';
  * Responds with 401 if the user is not authenticated.
  */
 export const GET: RequestHandler = async ({ locals }) => {
-  const tokens = getTokens(locals.sessionId);
+  const tokens = await getTokens(locals.sessionId);
   if (!tokens) return new Response('Not authenticated', { status: 401 });
 
-  const drive = getDriveClient(locals.sessionId);
+  const drive = await getDriveClient(locals.sessionId);
 
   const res = await drive.files.list({
     q: "mimeType='application/vnd.google-apps.spreadsheet'",

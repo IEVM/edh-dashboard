@@ -14,7 +14,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   }
 
   // Store in session for later API calls (e.g. loading Games/Decks).
-  setSessionData(locals.sessionId, 'databaseSheetId', spreadsheetId);
+  await setSessionData(locals.sessionId, 'databaseSheetId', spreadsheetId);
 
   return new Response('ok');
 };

@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ locals }): Promise<DecksPageData> =
   const sessionId = locals.sessionId as string;
 
   // Stored via setSessionData(..., 'databaseSheetId', ...)
-  const spreadsheetId = getSessionData<string>(sessionId, 'databaseSheetId');
+  const spreadsheetId = await getSessionData<string>(sessionId, 'databaseSheetId');
 
   if (!spreadsheetId) {
     return {

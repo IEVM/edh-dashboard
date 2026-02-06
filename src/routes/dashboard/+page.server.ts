@@ -38,7 +38,7 @@ type DashboardData = {
 export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> => {
   const sessionId = locals.sessionId;
 
-  const spreadsheetId = getSessionData<string>(sessionId, 'databaseSheetId') ?? null;
+  const spreadsheetId = (await getSessionData<string>(sessionId, 'databaseSheetId')) ?? null;
 
   if (!spreadsheetId) {
     return {

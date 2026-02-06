@@ -14,7 +14,7 @@ import { GET } from '../../src/routes/api/sheets/read/+server';
 
 describe('GET /api/sheets/read', () => {
   it('rejects when not authenticated', async () => {
-    mocks.hasTokens.mockReturnValueOnce(false);
+    mocks.hasTokens.mockResolvedValueOnce(false);
 
     const event = {
       locals: { sessionId: 's1' },
@@ -25,7 +25,7 @@ describe('GET /api/sheets/read', () => {
   });
 
   it('rejects when spreadsheetId is missing', async () => {
-    mocks.hasTokens.mockReturnValueOnce(true);
+    mocks.hasTokens.mockResolvedValueOnce(true);
 
     const event = {
       locals: { sessionId: 's1' },
@@ -36,8 +36,8 @@ describe('GET /api/sheets/read', () => {
   });
 
   it('returns values from the sheets client', async () => {
-    mocks.hasTokens.mockReturnValueOnce(true);
-    mocks.getSheetsClient.mockReturnValueOnce({
+    mocks.hasTokens.mockResolvedValueOnce(true);
+    mocks.getSheetsClient.mockResolvedValueOnce({
       spreadsheets: {
         values: {
           get: vi.fn().mockResolvedValue({ data: { values: [[1, 2], [3, 4]] } })

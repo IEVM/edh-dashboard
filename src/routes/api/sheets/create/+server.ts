@@ -12,10 +12,10 @@ import { getSheetsClient, getTokens } from '$lib/server/google';
  * Responds with `{ spreadsheetId, url }` on success, or a 401/500 response otherwise.
  */
 export const POST: RequestHandler = async ({ locals }) => {
-  const tokens = getTokens(locals.sessionId);
+  const tokens = await getTokens(locals.sessionId);
   if (!tokens) return new Response('Not authenticated', { status: 401 });
 
-  const sheets = getSheetsClient(locals.sessionId);
+  const sheets = await getSheetsClient(locals.sessionId);
 
   // 1) Create spreadsheet with Decks + Games sheets
   const createRes = await sheets.spreadsheets.create({
