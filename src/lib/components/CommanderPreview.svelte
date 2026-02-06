@@ -1,116 +1,68 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { loadDeckData } from '$lib/deck-links/load';
+	import { parseUrl } from '$lib/deck-links/parse';
+	import type { ParsedDeckLink } from '$lib/deck-links/types';
 
-	export let archidektUrl: string | null = null;
+	export let deckUrl: string | null = null;
 	export let summary: string | null = null;
 	export let deckName: string = '';
 
-	let deckId: string | null = null;
 	let loading = false;
-	let errorMsg: string | null = null;
-	let archidektName = '';
+	let fetchError: string | null = null;
+	let remoteName = '';
 	let image = '';
 	let commanders: string[] = [];
-	$: hasArchidektLink = !!archidektUrl && archidektUrl !== '-';
+	let lastLoadedKey: string | null = null;
+	let link: ParsedDeckLink = {
+		url: null,
+		provider: null,
+		id: null,
+		label: null,
+		error: null
+	};
 
-	/**
-	 * Extracts the numeric deck ID from an Archidekt deck URL.
-	 *
-	 * Accepts URLs like:
-	 * - https://archidekt.com/decks/1234567/...
-	 *
-	 * @param url Archidekt URL (or null)
-	 * @returns Deck ID as string, or null if not found
-	 */
-	function extractDeckId(url: string | null): string | null {
-		if (!url) return null;
-		const match = url.match(/archidekt\.com\/decks\/(\d+)/);
-		return match ? match[1] : null;
-	}
-
-	/**
-	 * Attempts to extract commander names from an Archidekt deck payload.
-	 *
-	 * Uses a heuristic: finds a category whose name includes "commander" and
-	 * maps its cards to oracle card names, then deduplicates.
-	 *
-	 * @param deck Parsed Archidekt deck object
-	 * @returns List of commander card names (deduplicated)
-	 */
-	function extractCommanders(deck: any): string[] {
-		if (!deck || !Array.isArray(deck.categories)) return [];
-
-		// Heuristic: find category named like "Commander" (Archidekt EDH decks usually have this)
-		const commanderCategory =
-			deck.categories.find(
-				(c: any) => typeof c.name === 'string' && c.name.toLowerCase().includes('commander')
-			) ?? null;
-
-		if (!commanderCategory || !Array.isArray(commanderCategory.cards)) return [];
-
-		const names = commanderCategory.cards
-			.map((entry: any) => entry?.card?.oracleCard?.name ?? entry?.card?.oracle_card?.name ?? null)
-			.filter((n: string | null): n is string => !!n);
-
-		// Deduplicate just in case
-		return Array.from(new Set(names));
-	}
-
-	/**
-	 * Loads deck data via the internal API and updates UI state.
-	 * Resets error/display state at the start, then sets loading true while fetching.
-	 */
-	async function loadDeck() {
-		errorMsg = null;
-		archidektName = '';
+	function resetDeckState() {
+		loading = false;
+		fetchError = null;
+		remoteName = '';
+		image = '';
 		commanders = [];
+		lastLoadedKey = null;
+	}
 
-		// Treat "-" as "no deck linked" (same as null) to avoid unnecessary fetch attempts.
-		const effectiveUrl = archidektUrl && archidektUrl !== '-' ? archidektUrl : null;
-
-		deckId = extractDeckId(effectiveUrl);
-
-		if (!deckId) {
-			errorMsg = 'Invalid or missing Archidekt link.';
-			return;
-		}
-
+	async function loadDeck(parsed: ParsedDeckLink) {
+		fetchError = null;
+		remoteName = '';
+		commanders = [];
+		image = '';
 		loading = true;
 
 		try {
-			const res = await fetch(`/api/archidekt/${deckId}`);
-			if (!res.ok) {
-				errorMsg = `Failed to load deck (${res.status}).`;
-				return;
-			}
-
-			const data = await res.json();
-			archidektName = data.name ?? 'Untitled Deck';
-			image = data.featured;
-			commanders = extractCommanders(data);
+			const data = await loadDeckData(parsed);
+			remoteName = data.name;
+			image = data.image;
+			commanders = data.commanders;
 		} catch (err) {
 			console.error(err);
-			errorMsg = 'Error while fetching deck data.';
+			fetchError = 'Error while fetching deck data.';
 		} finally {
 			loading = false;
 		}
 	}
 
-	// Initial load (client-only)
-	onMount(() => {
-		// Keep sentinel handling consistent with reactive reload.
-		if (hasArchidektLink) {
-			loadDeck();
-		}
-	});
+	$: link = parseUrl(deckUrl);
+
+	$: if (!link.url || link.error) {
+		resetDeckState();
+	}
 
 	// Reload when URL changes (client-only guard)
-	$: if (browser && hasArchidektLink) {
-		// Don’t spam the API if the ID didn’t change
-		const newId = extractDeckId(archidektUrl);
-		if (newId && newId !== deckId) {
-			loadDeck();
+	$: if (browser && link.provider && link.id) {
+		const key = `${link.provider}:${link.id}`;
+		if (key !== lastLoadedKey) {
+			lastLoadedKey = key;
+			loadDeck(link);
 		}
 	}
 </script>
@@ -122,28 +74,40 @@
 			<span class="font-semibold">
 				{#if deckName}
 					<a href="/dashboard/{encodeURIComponent(deckName)}">{deckName}</a>
-				{:else if archidektUrl && archidektUrl != '-'}
-					Archidekt Deck
+				{:else if remoteName}
+					{remoteName}
+				{:else if link.label}
+					{link.label} Deck
 				{:else}
-					No deck linked
+					Untitled Deck
 				{/if}
 			</span>
 
-			{#if hasArchidektLink}
-				<a href="/dashboard/{encodeURIComponent(deckName)}">
-					<img src={image} alt={deckName} />
+			{#if image}
+				<a href="/dashboard/{encodeURIComponent(deckName || remoteName)}">
+					<img
+						src={image}
+						alt={deckName || remoteName}
+						class="w-72 h-48 object-cover rounded-md border border-surface-700/60"
+					/>
 				</a>
+			{:else if link.error || fetchError || !link.url}
+				<div
+					class="w-72 h-48 rounded-md border border-surface-700/60 bg-surface-900/40 flex items-center justify-center text-xs text-center px-3 {link.error || fetchError ? 'text-error-400' : 'text-surface-400'}"
+				>
+					{link.error ?? fetchError ?? 'No deck link.'}
+				</div>
+			{/if}
 
+			{#if link.url && !link.error}
 				<a
-					href={archidektUrl}
+					href={link.url}
 					target="_blank"
 					rel="noreferrer"
 					class="text-xs text-primary-300 hover:text-primary-200 underline underline-offset-2"
 				>
-					Open on Archidekt
+					Open on {link.label}
 				</a>
-			{:else}
-				<span class="text-xs text-surface-400">No Archidekt link.</span>
 			{/if}
 		</div>
 
@@ -159,9 +123,4 @@
 		</p>
 	{/if}
 
-	{#if errorMsg}
-		<p class="text-xs text-error-400">
-			{errorMsg}
-		</p>
-	{/if}
 </div>

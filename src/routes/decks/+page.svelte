@@ -31,7 +31,7 @@
 				<CommanderPreview
 					deckName={deck.deckName}
 					summary={deck.summary}
-					archidektUrl={deck.archidektLink}
+					deckUrl={deck.archidektLink}
 				/>
 			{/each}
 		</div>

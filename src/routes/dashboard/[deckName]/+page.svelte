@@ -74,6 +74,14 @@
 		const sum = values.reduce((a, b) => a + b, 0);
 		return (sum / values.length).toFixed(digits);
 	}
+
+	function deckLinkLabel(url: string | null | undefined): string {
+		if (!url) return 'Deck';
+		const normalized = url.toLowerCase();
+		if (normalized.includes('moxfield.com')) return 'Moxfield';
+		if (normalized.includes('archidekt.com')) return 'Archidekt';
+		return 'Deck';
+	}
 </script>
 
 <div class="space-y-6">
@@ -112,15 +120,13 @@
 							rel="noreferrer"
 							class="text-primary-300 hover:text-primary-200 underline underline-offset-2"
 						>
-							View on Archidekt
+							View on {deckLinkLabel(deck.archidektLink)}
 						</a>
 					{/if}
 				</div>
 			</div>
 
-			{#if deck.archidektLink && deck.archidektLink !== '-'}
-				<CommanderPreview archidektUrl={deck.archidektLink} summary={deck.summary ?? ''} />
-			{/if}
+			<CommanderPreview deckUrl={deck.archidektLink} summary={deck.summary ?? ''} />
 		</div>
 
 		{#if error}
