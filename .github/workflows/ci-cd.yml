@@ -49,11 +49,11 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Upload Pages artifact
+      - name: Upload Vercel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cloudflare-pages
-          path: .svelte-kit/cloudflare
+          name: vercel-output
+          path: .vercel/output
           if-no-files-found: error
           retention-days: 7
 
@@ -68,56 +68,34 @@ jobs:
       contents: read
       issues: write
     steps:
-      - name: Download Pages artifact
+      - name: Download Vercel artifact
         uses: actions/download-artifact@v4
         with:
-          name: cloudflare-pages
-          path: .svelte-kit/cloudflare
+          name: vercel-output
+          path: .vercel/output
 
-      - name: Deploy to Cloudflare Pages Preview
-        id: deploy_preview
-        uses: cloudflare/wrangler-action@v3
+      - name: Deploy to Vercel Preview
+        id: vercel_preview
+        uses: amondnet/vercel-action@v25
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: >-
-            pages deploy .svelte-kit/cloudflare
-            --project-name ${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
-            --branch ${{ github.head_ref }}
-            --commit-hash ${{ github.sha }}
-
-      - name: Resolve Preview URL
-        id: preview_url
-        env:
-          COMMAND_OUTPUT: ${{ steps.deploy_preview.outputs.command-output }}
-        run: |
-          node - <<'NODE'
-          const fs = require('fs')
-          const output = process.env.COMMAND_OUTPUT || ''
-          let url = ''
-          try {
-            const data = JSON.parse(output)
-            url = data.url || data?.result?.url || data?.deployment?.url || ''
-          } catch {}
-          if (!url) {
-            const match = output.match(/https?:\/\/[^\s]+\.pages\.dev[^\s]*/)
-            if (match) url = match[0]
-          }
-          if (!url) {
-            throw new Error('Preview URL not found in Wrangler output')
-          }
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, `url=${url}\n`)
-          NODE
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: --prebuilt
 
       - name: Comment Preview URL
         uses: actions/github-script@v7
         env:
-          PREVIEW_URL: ${{ steps.preview_url.outputs.url }}
+          PREVIEW_URL: ${{ steps.vercel_preview.outputs.preview-url }}
         with:
           script: |
-            const marker = '<!-- cf-pages-preview -->'
+            const marker = '<!-- vercel-preview -->'
             const url = process.env.PREVIEW_URL
-            const body = `${marker}\nCloudflare Pages Preview\n\n${url}`
+            if (!url) {
+              core.setFailed('Preview URL is missing')
+              return
+            }
+            const body = `${marker}\nVercel Preview\n\n${url}`
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -150,19 +128,16 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Download Pages artifact
+      - name: Download Vercel artifact
         uses: actions/download-artifact@v4
         with:
-          name: cloudflare-pages
-          path: .svelte-kit/cloudflare
+          name: vercel-output
+          path: .vercel/output
 
-      - name: Deploy to Cloudflare Pages Production
-        uses: cloudflare/wrangler-action@v3
+      - name: Deploy to Vercel Production
+        uses: amondnet/vercel-action@v25
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: >-
-            pages deploy .svelte-kit/cloudflare
-            --project-name ${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
-            --branch main
-            --commit-hash ${{ github.sha }}
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: --prebuilt --prod
