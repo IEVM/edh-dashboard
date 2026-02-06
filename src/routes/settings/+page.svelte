@@ -73,7 +73,7 @@
   }
 </script>
 
-<div class="space-y-10 max-w-3xl mx-auto">
+<div class="space-y-6 max-w-4xl mx-auto">
   <!-- Header -->
   <header class="space-y-2">
     <h1 class="text-3xl font-semibold">Settings</h1>
@@ -81,7 +81,7 @@
   </header>
 
   <!-- Display current -->
-  <section class="space-y-4 p-6 rounded-xl bg-surface-800 border border-surface-700/40">
+  <section class="space-y-3 p-5 rounded-xl bg-surface-800 border border-surface-700/40">
     {#if spreadsheetId}
       <p>
         You have
@@ -100,37 +100,39 @@
     {/if}
   </section>
 
-  <!-- Choose existing -->
-  <section class="space-y-4 p-6 rounded-xl bg-surface-800 border border-surface-700/40">
-    <h2 class="text-xl font-semibold">Choose Existing Spreadsheet</h2>
+  <div class="grid gap-4 lg:grid-cols-2">
+    <!-- Choose existing -->
+    <section class="space-y-3 p-5 rounded-xl bg-surface-800 border border-surface-700/40">
+      <h2 class="text-xl font-semibold">Choose Existing Spreadsheet</h2>
 
-    <button class="btn variant-filled-primary-500" on:click={loadSheets} disabled={loadingDrive}>
-      {loadingDrive ? 'Loading…' : 'Load My Spreadsheets'}
-    </button>
+      <button class="btn variant-filled-primary-500" on:click={loadSheets} disabled={loadingDrive}>
+        {loadingDrive ? 'Loading…' : 'Load My Spreadsheets'}
+      </button>
 
-    {#if spreadsheets.length}
-      <select bind:value={selectedId} class="input variant-outlined-primary-500 w-full mt-4">
-        <option value="">Select a spreadsheet</option>
-        {#each spreadsheets as s}
-          <option value={s.id}>{s.name}</option>
-        {/each}
-      </select>
-    {/if}
-  </section>
+      {#if spreadsheets.length}
+        <select bind:value={selectedId} class="input variant-outlined-primary-500 w-full mt-4">
+          <option value="">Select a spreadsheet</option>
+          {#each spreadsheets as s}
+            <option value={s.id}>{s.name}</option>
+          {/each}
+        </select>
+      {/if}
+    </section>
 
-  <!-- Paste link -->
-  <section class="space-y-4 p-6 rounded-xl bg-surface-800 border border-surface-700/40">
-    <h2 class="text-xl font-semibold">Paste Spreadsheet Link</h2>
+    <!-- Paste link -->
+    <section class="space-y-3 p-5 rounded-xl bg-surface-800 border border-surface-700/40">
+      <h2 class="text-xl font-semibold">Paste Spreadsheet Link</h2>
 
-    <input
-      bind:value={pastedLink}
-      placeholder="https://docs.google.com/spreadsheets/d/..."
-      class="input variant-outlined-primary-500 w-full"
-    />
-  </section>
+      <input
+        bind:value={pastedLink}
+        placeholder="https://docs.google.com/spreadsheets/d/..."
+        class="input variant-outlined-primary-500 w-full"
+      />
+    </section>
+  </div>
 
   <!-- Create new -->
-  <section class="space-y-4 p-6 rounded-xl bg-surface-800 border border-surface-700/40">
+  <section class="space-y-3 p-5 rounded-xl bg-surface-800 border border-surface-700/40">
     <h2 class="text-xl font-semibold">Create New Spreadsheet</h2>
 
     <div class="flex flex-col sm:flex-row gap-3">

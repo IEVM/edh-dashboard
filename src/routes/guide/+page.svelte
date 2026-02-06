@@ -6,7 +6,7 @@
 	<h1 class="text-3xl font-semibold">How to use this EDH tracker</h1>
 	<p class="text-surface-300 text-sm">
 		This site helps you track your Commander games using your own Google Sheets as a database.
-		Here&#39;s how to set it up and why it needs certain permissions.
+		Here is how to set it up and why it needs certain permissions.
 	</p>
 </header>
 
@@ -16,7 +16,7 @@
 	<p class="text-sm text-surface-200">
 		First, sign in with Google using the button in the top-right corner. This is required so the
 		site can read and update your EDH data stored in your own Google Sheets. There is no separate
-		account system on this site&mdash;your Google account is your identity.
+		account system on this site. Your Google account is your identity.
 	</p>
 </section>
 
@@ -28,8 +28,8 @@
 			href="/settings"
 			class="text-primary-300 hover:text-primary-200 underline underline-offset-2">Settings</a
 		> page. There you can create a new EDH database spreadsheet, select one of your existing spreadsheets,
-		or paste a link to a spreadsheet you&#39;ve already set up. This spreadsheet becomes your personal
-		EDH data hub&mdash;all game and deck information will be stored there.
+		or paste a link to a spreadsheet you have already set up. This spreadsheet becomes your personal
+		EDH data hub. All game and deck information will be stored there.
 	</p>
 </section>
 
@@ -39,8 +39,7 @@
 	<p class="text-sm text-surface-200">
 		In your database spreadsheet, use the deck sheet (for example a tab called <strong>Decks</strong
 		>) to enter one row per deck. Add details like the deck name, commander or Archidekt link, and a
-		short summary. The website uses this information to power commander previews and deck-based
-		statistics.
+		short summary. The website uses this information to power commander previews and deck statistics.
 	</p>
 </section>
 
@@ -51,7 +50,7 @@
 		During a game night, open the same spreadsheet in the
 		<strong>Google Sheets mobile app</strong> on your phone. In the <strong>Games</strong> sheet, log
 		each game: which deck you played, the winner, fun ratings, pod bracket, and any notes you want. Each
-		row represents your deck in a single game. You only enter data the website handles all the calculations.
+		row represents your deck in a single game. You only enter data. The website handles all calculations.
 	</p>
 </section>
 
@@ -59,12 +58,11 @@
 <section class="space-y-2 p-4 rounded-xl bg-surface-800 border border-surface-700/40">
 	<h2 class="text-lg font-semibold">4) Analyze your data with dashboards</h2>
 	<p class="text-sm text-surface-200">
-		Once you&#39;ve logged some games, go back to the main
-		<a href="/" class="text-primary-300 hover:text-primary-200 underline underline-offset-2"
+		Once you have logged some games, go to the
+		<a href="/dashboard" class="text-primary-300 hover:text-primary-200 underline underline-offset-2"
 			>Dashboard</a
-		>. You&#39;ll see a pie chart of which decks you play the most, total games played, win rates
-		per deck, and other statistics. The more games you record, the more accurate and interesting
-		these insights become.
+		>. You will see a pie chart of which decks you play the most, total games played, win rates
+		per deck, and other statistics. The more games you record, the more accurate these insights become.
 	</p>
 </section>
 
