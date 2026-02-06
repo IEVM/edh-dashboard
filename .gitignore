@@ -22,3 +22,7 @@ vite.config.ts.timestamp-*
 
 # VSCode
 /.vscode
+
+# Tests
+/playwright-report
+/test-results

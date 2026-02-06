@@ -12,6 +12,7 @@
 	let archidektName = '';
 	let image = '';
 	let commanders: string[] = [];
+	$: hasArchidektLink = !!archidektUrl && archidektUrl !== '-';
 
 	/**
 	 * Extracts the numeric deck ID from an Archidekt deck URL.
@@ -99,13 +100,13 @@
 	// Initial load (client-only)
 	onMount(() => {
 		// Keep sentinel handling consistent with reactive reload.
-		if (archidektUrl && archidektUrl !== '-') {
+		if (hasArchidektLink) {
 			loadDeck();
 		}
 	});
 
 	// Reload when URL changes (client-only guard)
-	$: if (browser && archidektUrl && archidektUrl !== '-') {
+	$: if (browser && hasArchidektLink) {
 		// Don’t spam the API if the ID didn’t change
 		const newId = extractDeckId(archidektUrl);
 		if (newId && newId !== deckId) {
@@ -128,7 +129,7 @@
 				{/if}
 			</span>
 
-			{#if archidektUrl && archidektUrl != '-'}
+			{#if hasArchidektLink}
 				<a href="/dashboard/{encodeURIComponent(deckName)}">
 					<img src={image} alt={deckName} />
 				</a>
@@ -141,6 +142,8 @@
 				>
 					Open on Archidekt
 				</a>
+			{:else}
+				<span class="text-xs text-surface-400">No Archidekt link.</span>
 			{/if}
 		</div>
 
