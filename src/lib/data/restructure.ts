@@ -276,6 +276,7 @@ export function statsFromGames(games: Games): Stats {
   const funWinsValues: number[] = [];
   const funLossValues: number[] = [];
   const estBracketValues: number[] = [];
+  let expectedWins = 0;
 
   for (const g of games) {
     if (g.winner === 1) wins++;
@@ -293,16 +294,24 @@ export function statsFromGames(games: Games): Stats {
     if (g.p4Fun !== null) funOtherValues.push(g.p4Fun);
 
     if (g.estBracket !== null) estBracketValues.push(g.estBracket);
+
+    // Infer table size from which fun columns were filled in.
+    let players = 1;
+    if (g.p2Fun !== null) players += 1;
+    if (g.p3Fun !== null) players += 1;
+    if (g.p4Fun !== null) players += 1;
+    expectedWins += 1 / players;
   }
 
   const winRate = totalGames ? wins / totalGames : 0;
+  const expectedWinrate = totalGames ? expectedWins / totalGames : 0;
 
   return {
     totalGames,
     wins,
     losses,
     winRate,
-    expectedWinrate: 0.25, // Placeholder until you introduce a model / mapping.
+    expectedWinrate,
     avgFunSelf: average(funSelfValues),
     stdFunSelf: standardDeviation(funSelfValues),
     avgFunOthers: average(funOtherValues),

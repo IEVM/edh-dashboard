@@ -130,6 +130,47 @@ describe('statsFromGames', () => {
     expect(stats.avgFunWins).toBe(8);
     expect(stats.avgFunLosses).toBeNull();
     expect(stats.avgEstBracket).toBe(2.5);
+    expect(stats.expectedWinrate).toBeCloseTo(0.375);
+  });
+
+  it('computes expected win rate from inferred table size', () => {
+    const games: Games = [
+      {
+        deck: 'A',
+        winner: 1,
+        fun: 5,
+        p2Fun: 4,
+        p3Fun: 3,
+        p4Fun: 2,
+        notes: null,
+        estBracket: null
+      },
+      {
+        deck: 'A',
+        winner: 2,
+        fun: 4,
+        p2Fun: 3,
+        p3Fun: null,
+        p4Fun: null,
+        notes: null,
+        estBracket: null
+      },
+      {
+        deck: 'A',
+        winner: 1,
+        fun: 3,
+        p2Fun: null,
+        p3Fun: null,
+        p4Fun: null,
+        notes: null,
+        estBracket: null
+      }
+    ];
+
+    const stats = statsFromGames(games);
+
+    // Expected wins = 1/4 + 1/2 + 1/1 = 1.75 across 3 games
+    expect(stats.expectedWinrate).toBeCloseTo(1.75 / 3, 5);
   });
 });
 

@@ -173,7 +173,7 @@
 
 		<!-- 3) Winrate vs target bar -->
 		{#if stats}
-			<WRBar winRate={stats.winRate} expectedWinrate={stats.expectedWinrate}></WRBar>
+			<WRBar winRate={stats.winRate} expectedWinrate={targetWinRate / 100}></WRBar>
 		{/if}
 
 		<!-- 4) Best deck highlight -->

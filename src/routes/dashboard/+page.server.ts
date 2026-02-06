@@ -72,9 +72,6 @@ export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> =
   // Aggregate per-deck games and wins.
   const deckMap = new Map<string, { games: number; wins: number }>();
 
-  // Expected wins across all games assuming a fair game where each player has 1/N chance to win.
-  // N is inferred from which "pXFun" fields are present.
-  let expectedWins = 0;
 
   for (const g of games) {
     const deckName = typeof g.deck === 'string' ? g.deck.trim() : g.deck.deckName.trim();
@@ -89,13 +86,6 @@ export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> =
 
     deckMap.set(deckName, current);
 
-    // Infer table size from which fun columns were filled in.
-    let players = 1;
-    if (g.p2Fun !== null) players += 1;
-    if (g.p3Fun !== null) players += 1;
-    if (g.p4Fun !== null) players += 1;
-
-    expectedWins += 1 / players;
   }
 
   const deckStats: DeckStats[] = [];
@@ -112,7 +102,7 @@ export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> =
   }
 
   const totalGames = games.length;
-  const targetWinRate = totalGames > 0 ? (expectedWins / totalGames) * 100 : 0;
+  const targetWinRate = stats ? stats.expectedWinrate * 100 : 0;
 
   const totalGamesForUsage = deckStats.reduce((sum, d) => sum + d.games, 0);
   for (const deck of deckStats) {
