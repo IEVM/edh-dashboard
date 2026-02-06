@@ -5,8 +5,8 @@ type StoredEntry = {
 	expiresAt: number | null;
 };
 
-const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
-const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+const upstashUrl = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
 const useUpstash = !!upstashUrl && !!upstashToken;
 
 const upstash = useUpstash
