@@ -1,7 +1,29 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+if command -v npm >/dev/null 2>&1; then
+	npm run pre-push-check
+	exit $?
+fi
+
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+	. "$NVM_DIR/nvm.sh"
+fi
+
+if command -v fnm >/dev/null 2>&1; then
+	eval "$(fnm env --use-on-cd)"
+fi
+
+if [ -s "$HOME/.asdf/asdf.sh" ]; then
+	. "$HOME/.asdf/asdf.sh"
+fi
+
+export PATH="/usr/local/bin:/usr/bin:$PATH"
+
+if ! command -v npm >/dev/null 2>&1; then
+	echo "npm not found in PATH. Ensure Node is available in git hooks."
+	exit 1
+fi
 
 npm run pre-push-check
