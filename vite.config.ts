@@ -6,6 +6,7 @@ export default defineConfig({
 	plugins: [sveltekit(), purgeCss()],
 	test: {
 		environment: 'node',
+		environmentMatchGlobs: [['tests/components/**', 'jsdom']],
 		include: [
 			'tests/unit/**/*.test.ts',
 			'tests/components/**/*.test.ts',

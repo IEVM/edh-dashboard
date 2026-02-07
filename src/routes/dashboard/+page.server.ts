@@ -1,5 +1,6 @@
 // src/routes/dashboard/+page.server.ts
 import type { PageServerLoad } from './$types';
+import { env } from '$env/dynamic/private';
 import {
 	loadDatabase,
 	getGamesJson,
@@ -10,6 +11,7 @@ import {
 
 import { getSessionData } from '$lib/server/session';
 import { getSheetsClient } from '$lib/server/google';
+import { E2E_GAMES_SHEET } from '$lib/server/e2e-fixtures';
 
 export type DeckStats = {
 	name: string;
@@ -52,11 +54,10 @@ export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> =
 		};
 	}
 
-	// Note: getSheetsClient is synchronous in your current implementation.
-	// `await` does not hurt, but it can be removed for clarity.
-	const sheetsClient = await getSheetsClient(sessionId);
-
-	const [gamesSheet] = await loadDatabase(spreadsheetId, sheetsClient, ['Games']);
+	const gamesSheet =
+		env.E2E_TEST_MODE === '1'
+			? E2E_GAMES_SHEET
+			: (await loadDatabase(spreadsheetId, await getSheetsClient(sessionId), ['Games']))[0];
 	const games: Games = getGamesJson(gamesSheet);
 
 	if (!games.length) {

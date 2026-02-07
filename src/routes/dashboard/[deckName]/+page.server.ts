@@ -1,5 +1,6 @@
 // src/routes/dashboard/[deckName]/+page.server.ts
 import type { PageServerLoad } from './$types';
+import { env } from '$env/dynamic/private';
 import { getSessionData } from '$lib/server/session';
 import { getSheetsClient } from '$lib/server/google';
 
@@ -11,6 +12,7 @@ import {
 	withStatsFromGames,
 	type Deck
 } from '$lib/data/restructure';
+import { E2E_DECKS_SHEET, E2E_GAMES_SHEET } from '$lib/server/e2e-fixtures';
 
 type PageData = {
 	spreadsheetId: string | null;
@@ -41,14 +43,10 @@ export const load: PageServerLoad = async ({ locals, params }): Promise<PageData
 	}
 
 	try {
-		// Sheets client is created from tokens stored for this session.
-		const sheetsClient = await getSheetsClient(sessionId);
-
-		// 1) Load both Games and Decks sheets
-		const [gamesSheet, decksSheet] = await loadDatabase(spreadsheetId, sheetsClient, [
-			'Games',
-			'Decks'
-		]);
+		const [gamesSheet, decksSheet] =
+			env.E2E_TEST_MODE === '1'
+				? [E2E_GAMES_SHEET, E2E_DECKS_SHEET]
+				: await loadDatabase(spreadsheetId, await getSheetsClient(sessionId), ['Games', 'Decks']);
 
 		// 2) Find the matching deck row in the "Decks" sheet by the "Name" column.
 		// filterData expects the full sheet including the header row at index 0.

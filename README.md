@@ -7,7 +7,7 @@ Die Daten werden in **deinem eigenen Google Spreadsheet** gespeichert (als “Da
 
 > Status: **Prototype / in Arbeit**
 
-Live App: [edh-dashboard.vercel.app/dashboard](https://edh-dashboard.vercel.app/dashboard)
+Live App: [edh-dashboard.vercel.app](https://edh-dashboard.vercel.app)
 
 ---
 

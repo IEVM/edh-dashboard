@@ -66,16 +66,15 @@
 		return a - b;
 	}
 
-	function sortRows(data: DeckStatsRow[]) {
-		const key = sortKey;
+	function sortRows(data: DeckStatsRow[], key: DeckStatsColumn['key'] | null, dir: 'asc' | 'desc') {
 		if (!key) return data;
 		return [...data].sort((a, b) => {
 			const diff = compareValues(a[key] as number, b[key] as number);
-			return sortDir === 'asc' ? diff : -diff;
+			return dir === 'asc' ? diff : -diff;
 		});
 	}
 
-	$: sortedRows = sortRows(rows);
+	$: sortedRows = sortRows(rows, sortKey, sortDir);
 </script>
 
 <div class="overflow-x-auto -mx-2 sm:mx-0">

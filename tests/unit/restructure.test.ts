@@ -94,6 +94,19 @@ describe('getGamesJson', () => {
 });
 
 describe('statsFromGames', () => {
+	it('returns zeros and null averages for empty games', () => {
+		const stats = statsFromGames([]);
+
+		expect(stats.totalGames).toBe(0);
+		expect(stats.wins).toBe(0);
+		expect(stats.losses).toBe(0);
+		expect(stats.winRate).toBe(0);
+		expect(stats.expectedWinrate).toBe(0);
+		expect(stats.avgFunSelf).toBeNull();
+		expect(stats.avgFunOthers).toBeNull();
+		expect(stats.avgEstBracket).toBeNull();
+	});
+
 	it('computes aggregate stats for wins, losses, and averages', () => {
 		const games: Games = [
 			{

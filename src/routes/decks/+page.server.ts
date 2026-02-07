@@ -1,7 +1,9 @@
 import type { PageServerLoad } from './$types';
+import { env } from '$env/dynamic/private';
 import { getSessionData } from '$lib/server/session';
 import { getSheetsClient } from '$lib/server/google';
 import { loadDatabase, getDeckJson, type Deck } from '$lib/data/restructure';
+import { E2E_DECKS_SHEET } from '$lib/server/e2e-fixtures';
 
 type DecksPageData = {
 	error?: string;
@@ -28,11 +30,10 @@ export const load: PageServerLoad = async ({ locals }): Promise<DecksPageData> =
 		};
 	}
 
-	// Note: getSheetsClient is synchronous in your current implementation.
-	const sheetsClient = await getSheetsClient(sessionId);
-
-	// Only load the "Decks" sheet
-	const [decksSheet] = await loadDatabase(spreadsheetId, sheetsClient, ['Decks']);
+	const decksSheet =
+		env.E2E_TEST_MODE === '1'
+			? E2E_DECKS_SHEET
+			: (await loadDatabase(spreadsheetId, await getSheetsClient(sessionId), ['Decks']))[0];
 
 	if (!Array.isArray(decksSheet) || decksSheet.length < 2) {
 		return {

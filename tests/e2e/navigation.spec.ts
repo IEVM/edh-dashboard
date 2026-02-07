@@ -14,6 +14,14 @@ test.beforeEach(async ({ page }) => {
 			headers: { location: '/' }
 		});
 	});
+
+	await page.route('**/api/archidekt/**', async (route) => {
+		await route.fulfill({
+			status: 200,
+			contentType: 'application/json',
+			body: JSON.stringify({ name: 'Deck Alpha', featured: '', categories: [] })
+		});
+	});
 });
 
 test('home page renders welcome copy and sign-in button', async ({ page }) => {

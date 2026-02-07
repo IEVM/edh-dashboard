@@ -4,7 +4,8 @@
 	export let data: { spreadsheetId: string | null };
 
 	// Currently linked spreadsheet id (as shown in the UI)
-	let spreadsheetId = data.spreadsheetId ?? '';
+	let spreadsheetId = '';
+	$: spreadsheetId = data.spreadsheetId ?? '';
 
 	let spreadsheets: Array<{ id: string; name: string }> = [];
 	let selectedId = '';
