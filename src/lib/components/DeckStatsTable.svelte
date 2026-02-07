@@ -94,7 +94,7 @@
 </script>
 
 <div class="overflow-x-auto -mx-2 sm:mx-0">
-	<table class="w-full text-sm min-w-[640px]">
+	<table class="w-full text-sm min-w-[360px] sm:min-w-[640px]">
 		<thead class="text-xs text-surface-400 border-b border-surface-700/60">
 			<tr>
 				<th class="py-2 text-left">Deck</th>
@@ -108,7 +108,12 @@
 							>
 								<span>{column.label}</span>
 								{#if sortKey === column.key}
-									<span class="text-[10px] text-surface-500">{sortDir}</span>
+									<span class="hidden sm:inline text-[10px] text-surface-500">
+										{sortDir}
+									</span>
+									<span class="sm:hidden text-[10px] text-surface-500">
+										{@html sortDir === 'asc' ? '&uarr;' : '&darr;'}
+									</span>
 								{/if}
 							</button>
 						{:else}
