@@ -112,7 +112,7 @@
 										{sortDir}
 									</span>
 									<span class="sm:hidden text-[10px] text-surface-500">
-										{@html sortDir === 'asc' ? '&uarr;' : '&darr;'}
+										{sortDir === 'asc' ? '^' : 'v'}
 									</span>
 								{/if}
 							</button>

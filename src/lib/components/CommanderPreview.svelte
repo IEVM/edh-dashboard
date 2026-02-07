@@ -12,7 +12,6 @@
 	let fetchError: string | null = null;
 	let remoteName = '';
 	let image = '';
-	let commanders: string[] = [];
 	let lastLoadedKey: string | null = null;
 	let link: ParsedDeckLink = {
 		url: null,
@@ -27,14 +26,12 @@
 		fetchError = null;
 		remoteName = '';
 		image = '';
-		commanders = [];
 		lastLoadedKey = null;
 	}
 
 	async function loadDeck(parsed: ParsedDeckLink) {
 		fetchError = null;
 		remoteName = '';
-		commanders = [];
 		image = '';
 		loading = true;
 
@@ -42,7 +39,6 @@
 			const data = await loadDeckData(parsed);
 			remoteName = data.name;
 			image = data.image;
-			commanders = data.commanders;
 		} catch (err) {
 			console.error(err);
 			fetchError = 'Error while fetching deck data.';

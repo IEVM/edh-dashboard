@@ -84,10 +84,12 @@
 	</header>
 
 	{#if mobileOpen}
-		<div
+		<button
 			class="fixed inset-0 bg-black/50 z-20 md:hidden"
+			type="button"
+			aria-label="Close navigation"
 			on:click={() => (mobileOpen = false)}
-		></div>
+		></button>
 		<aside
 			id="mobile-nav"
 			class="fixed top-0 left-0 h-full w-72 bg-surface-900 border-r border-surface-700/60 z-30 md:hidden"

@@ -122,7 +122,6 @@ export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> =
 		});
 	}
 
-	const totalGames = games.length;
 	const targetWinRate = stats ? stats.expectedWinrate * 100 : 0;
 
 	const totalGamesForUsage = deckStats.reduce((sum, d) => sum + d.games, 0);

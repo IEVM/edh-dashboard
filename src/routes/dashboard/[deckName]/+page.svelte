@@ -140,12 +140,6 @@
 			<CommanderPreview deckUrl={deck.archidektLink} summary={deck.summary ?? ''} />
 		</div>
 
-		{#if error}
-			<div class="p-3 rounded-lg bg-error-500/15 border border-error-600/50 text-error-300 text-sm">
-				{error}
-			</div>
-		{/if}
-
 		<!-- Quick stats -->
 		{#if deck.stats}
 			<div class="grid gap-4 md:grid-cols-3">
