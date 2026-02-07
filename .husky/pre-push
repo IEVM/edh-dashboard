@@ -7,6 +7,23 @@ run_check() {
 	npm run pre-push-check
 }
 
+find_npm() {
+	for candidate in \
+		"$HOME/.volta/bin/npm" \
+		"$HOME/.asdf/shims/npm" \
+		"$HOME/.nvm/versions/node"/*/bin/npm \
+		"$HOME/.local/share/fnm/aliases/default/bin/npm" \
+		"$HOME/.fnm/aliases/default/bin/npm" \
+		"/usr/local/bin/npm" \
+		"/usr/bin/npm"; do
+		if [ -x "$candidate" ]; then
+			printf '%s\n' "$candidate"
+			return 0
+		fi
+	done
+	return 1
+}
+
 export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
 
 if command -v npm >/dev/null 2>&1; then
@@ -42,6 +59,12 @@ fi
 
 if command -v npm >/dev/null 2>&1; then
 	run_check
+	exit $?
+fi
+
+NPM_FALLBACK="$(find_npm || true)"
+if [ -n "$NPM_FALLBACK" ]; then
+	"$NPM_FALLBACK" run pre-push-check
 	exit $?
 fi
 
