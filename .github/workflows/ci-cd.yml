@@ -84,7 +84,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: --prebuilt
+          vercel-args: --prebuilt --archive=tgz
 
       - name: Comment Preview URL
         uses: actions/github-script@v7
@@ -146,4 +146,4 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: --prebuilt --prod
+          vercel-args: --prebuilt --archive=tgz --prod

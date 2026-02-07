@@ -1,9 +1,13 @@
 # EDH-Dashboard
 
+[![CI](https://github.com/IEVM/edh-dashboard/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/IEVM/edh-dashboard/actions/workflows/ci-cd.yml)
+
 Ein Dashboard, mit dem du deine **Magic: The Gathering – Commander (EDH)** Partien tracken kannst.  
 Die Daten werden in **deinem eigenen Google Spreadsheet** gespeichert (als “Datenbank”) und von dort aus wieder ausgelesen – **ohne** dass du selbst eine Datenbank hosten musst.
 
 > Status: **Prototype / in Arbeit**
+
+Live App: [edh-dashboard.vercel.app/dashboard](https://edh-dashboard.vercel.app/dashboard)
 
 ---
 
@@ -26,6 +30,11 @@ Die Daten werden in **deinem eigenen Google Spreadsheet** gespeichert (als “Da
 - **Skeleton UI**
 - **Google OAuth2**
 - **Google Sheets** (als Persistence-Layer)
+- **Vercel** (Deployment)
+- **Upstash Redis** (Session und Token Store)
+- **Vitest** (Unit Tests)
+- **Playwright** (E2E Tests)
+- **ESLint + Prettier** (Linting und Formatierung)
 
 ---
 
