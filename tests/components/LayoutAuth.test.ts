@@ -19,6 +19,21 @@ describe('Layout auth state', () => {
 		expect(queryByRole('link', { name: 'Settings' })).toBeNull();
 	});
 
+	it('shows session banner on auth-required routes when logged out', () => {
+		const { getByText, getByRole } = render(Layout, {
+			props: {
+				data: {
+					isAuthenticated: false,
+					hasDatabase: false,
+					currentPath: '/settings'
+				}
+			}
+		});
+
+		expect(getByText('Google connection lost. Reconnect to continue.')).toBeTruthy();
+		expect(getByRole('button', { name: 'Reconnect Google' })).toBeTruthy();
+	});
+
 	it('shows nav items when authenticated and database is linked', () => {
 		const { getByText, queryByRole: queryLink } = render(Layout, {
 			props: {

@@ -14,6 +14,12 @@
 		{ href: '/guide', label: 'Guide' }
 	];
 
+	const authRequiredPrefixes = ['/settings', '/decks', '/dashboard'];
+	$: requiresAuthForPath = authRequiredPrefixes.some(
+		(prefix) => data.currentPath === prefix || data.currentPath.startsWith(`${prefix}/`)
+	);
+	$: showSessionBanner = !data.isAuthenticated && requiresAuthForPath;
+
 	/**
 	 * Starts the Google OAuth flow by navigating to the auth endpoint.
 	 */
@@ -82,6 +88,22 @@
 			</div>
 		</div>
 	</header>
+
+	{#if showSessionBanner}
+		<div class="border-b border-error-600/40 bg-error-500/15">
+			<div
+				class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+			>
+				<div class="text-sm text-error-200">Google connection lost. Reconnect to continue.</div>
+				<button
+					class="btn variant-filled-primary-500 text-xs sm:text-sm px-3 sm:px-4 py-2"
+					on:click={signInWithGoogle}
+				>
+					Reconnect Google
+				</button>
+			</div>
+		</div>
+	{/if}
 
 	{#if mobileOpen}
 		<button
