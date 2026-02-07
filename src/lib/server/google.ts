@@ -1,7 +1,7 @@
 import { google } from 'googleapis';
 import type { Credentials } from 'google-auth-library';
 import { env } from '$env/dynamic/private';
-import { kvGet, kvSet } from './kv';
+import { kvDelete, kvGet, kvSet } from './kv';
 
 const SCOPES = [
 	'openid',
@@ -66,6 +66,11 @@ export async function handleAuthCode(sessionId: string, code: string) {
  */
 export async function saveTokens(sessionId: string, tokens: Credentials) {
 	await kvSet(tokensKey(sessionId), tokens, TOKEN_TTL_SECONDS);
+}
+
+/** Clears any stored tokens for a session. */
+export async function clearTokens(sessionId: string) {
+	await kvDelete(tokensKey(sessionId));
 }
 
 /** @returns tokens for a session or undefined if not authenticated. */

@@ -8,7 +8,7 @@ export default defineConfig({
 	timeout: 30_000,
 	expect: { timeout: 5_000 },
 	webServer: {
-		command: 'npm run dev -- --host 127.0.0.1 --port 4173',
+		command: 'E2E_TEST_MODE=1 npm run dev -- --host 127.0.0.1 --port 4173',
 		port,
 		reuseExistingServer: !isCI
 	},

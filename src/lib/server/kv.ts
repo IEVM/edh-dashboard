@@ -47,3 +47,12 @@ export async function kvSet<T>(key: string, value: T, ttlSeconds?: number) {
 	const expiresAt = ttlSeconds ? Date.now() + ttlSeconds * 1000 : null;
 	memoryStore.set(key, { value, expiresAt });
 }
+
+export async function kvDelete(key: string) {
+	if (useUpstash) {
+		await upstash!.del(key);
+		return;
+	}
+
+	memoryStore.delete(key);
+}

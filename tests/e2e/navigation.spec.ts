@@ -30,12 +30,27 @@ test('sign-in button triggers mocked OAuth flow', async ({ page }) => {
 	await expect(page).toHaveURL('/');
 });
 
-test('nav link to settings shows settings header', async ({ page }) => {
+test('nav shows items only when auth and database requirements are met', async ({ page }) => {
 	await page.goto('/');
 
-	await page.getByRole('link', { name: 'Settings' }).click();
-	await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
-	await expect(page.getByText('You have not yet linked a database.')).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Settings' })).toHaveCount(0);
+	await expect(page.getByRole('link', { name: 'Decks' })).toHaveCount(0);
+	await expect(page.getByRole('link', { name: 'Dashboard' })).toHaveCount(0);
+
+	await page.request.post('/api/test/session', { data: { authenticated: true } });
+	await page.goto('/');
+
+	await expect(page.getByRole('link', { name: 'Settings' })).toHaveCount(1);
+	await expect(page.getByRole('link', { name: 'Decks' })).toHaveCount(0);
+	await expect(page.getByRole('link', { name: 'Dashboard' })).toHaveCount(0);
+
+	await page.request.post('/api/test/session', {
+		data: { authenticated: true, databaseId: 'test-db-id' }
+	});
+	await page.goto('/');
+
+	await expect(page.getByRole('link', { name: 'Decks' })).toHaveCount(1);
+	await expect(page.getByRole('link', { name: 'Dashboard' })).toHaveCount(1);
 });
 
 test('decks page shows missing database state', async ({ page }) => {

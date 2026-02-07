@@ -1,6 +1,7 @@
 <script lang="ts">
 	import WRBar from '$lib/components/WRBar.svelte';
 	import DeckStatsTable from '$lib/components/DeckStatsTable.svelte';
+	import type { DeckStatsColumn } from '$lib/components/deck-stats';
 	import type { Stats } from '$lib/data/restructure';
 	import type { DeckStats } from './+page.server';
 
@@ -62,13 +63,13 @@
 		return `/dashboard/${encodeURIComponent(name)}`;
 	}
 
-	const overviewColumns = [
+	const overviewColumns: DeckStatsColumn[] = [
 		{ key: 'games', label: 'Games', align: 'right', format: 'games', hideOnMobile: false },
 		{ key: 'winRate', label: 'Winrate', align: 'right', format: 'percent', hideOnMobile: true },
 		{ key: 'usagePercent', label: 'Usage', align: 'right', format: 'percent', hideOnMobile: true }
 	];
 
-	const detailColumns = [
+	const detailColumns: DeckStatsColumn[] = [
 		{ key: 'games', label: 'Games', align: 'right', format: 'number' },
 		{ key: 'wins', label: 'Wins', align: 'right', format: 'number' },
 		{ key: 'losses', label: 'Losses', align: 'right', format: 'number' },

@@ -1,24 +1,5 @@
 <script lang="ts">
-	export type DeckStatsRow = {
-		name: string;
-		games: number;
-		wins: number;
-		losses: number;
-		winRate: number; // 0 to 100
-		usagePercent: number; // 0 to 100
-		avgFunSelf?: number | null;
-		avgFunOthers?: number | null;
-	};
-
-	export type DeckStatsColumn = {
-		key: 'games' | 'wins' | 'losses' | 'winRate' | 'usagePercent' | 'avgFunSelf' | 'avgFunOthers';
-		label: string;
-		align?: 'left' | 'right';
-		format?: 'number' | 'percent' | 'games' | 'score';
-		showBar?: boolean;
-		hideOnMobile?: boolean;
-		sortable?: boolean;
-	};
+	import type { DeckStatsColumn, DeckStatsRow } from '$lib/components/deck-stats';
 
 	export let rows: DeckStatsRow[] = [];
 	export let columns: DeckStatsColumn[] = [];
@@ -85,12 +66,16 @@
 		return a - b;
 	}
 
-	$: sortedRows = sortKey
-		? [...rows].sort((a, b) => {
-				const diff = compareValues(a[sortKey] as number, b[sortKey] as number);
-				return sortDir === 'asc' ? diff : -diff;
-			})
-		: rows;
+	function sortRows(data: DeckStatsRow[]) {
+		const key = sortKey;
+		if (!key) return data;
+		return [...data].sort((a, b) => {
+			const diff = compareValues(a[key] as number, b[key] as number);
+			return sortDir === 'asc' ? diff : -diff;
+		});
+	}
+
+	$: sortedRows = sortRows(rows);
 </script>
 
 <div class="overflow-x-auto -mx-2 sm:mx-0">
