@@ -82,6 +82,17 @@
 		if (normalized.includes('archidekt.com')) return 'Archidekt';
 		return 'Deck';
 	}
+
+	$: funDiff =
+		deck?.stats && deck.stats.avgFunSelf != null && deck.stats.avgFunOthers != null
+			? deck.stats.avgFunSelf - deck.stats.avgFunOthers
+			: null;
+
+	function fmtDiff(value: number | null | undefined, digits = 1): string {
+		if (value == null || Number.isNaN(value)) return '-';
+		const sign = value > 0 ? '+' : '';
+		return `${sign}${value.toFixed(digits)}`;
+	}
 </script>
 
 <div class="space-y-6">
@@ -172,6 +183,21 @@
 					<div class="text-lg font-semibold">
 						{fmtNum(deck.stats.avgEstBracket)}
 					</div>
+				</div>
+
+				<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 space-y-2">
+					<div class="text-xs uppercase tracking-wide text-surface-400">Fun vs others</div>
+					<div class="grid grid-cols-2 gap-3 text-sm">
+						<div>
+							<div class="text-xs text-surface-400">You</div>
+							<div class="text-lg font-semibold">{fmtNum(deck.stats.avgFunSelf)}</div>
+						</div>
+						<div>
+							<div class="text-xs text-surface-400">Others</div>
+							<div class="text-lg font-semibold">{fmtNum(deck.stats.avgFunOthers)}</div>
+						</div>
+					</div>
+					<div class="text-xs text-surface-400">Diff: {fmtDiff(funDiff)}</div>
 				</div>
 
 				<WRBar winRate={deck.stats.winRate} expectedWinrate={deck.stats.expectedWinrate}></WRBar>

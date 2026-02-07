@@ -18,6 +18,8 @@ export type DeckStats = {
   losses: number;
   winRate: number; // 0–100
   usagePercent: number; // 0–100
+  avgFunSelf: number | null;
+  avgFunOthers: number | null;
 };
 
 type DashboardData = {
@@ -69,27 +71,46 @@ export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> =
 
   const stats = statsFromGames(games);
 
-  // Aggregate per-deck games and wins.
-  const deckMap = new Map<string, { games: number; wins: number }>();
+  const average = (values: number[]) => {
+    if (!values.length) return null;
+    const sum = values.reduce((acc, v) => acc + v, 0);
+    return sum / values.length;
+  };
+
+  // Aggregate per-deck games, wins, and fun scores.
+  const deckMap = new Map<
+    string,
+    { games: number; wins: number; funSelf: number[]; funOthers: number[] }
+  >();
 
 
   for (const g of games) {
     const deckName = typeof g.deck === 'string' ? g.deck.trim() : g.deck.deckName.trim();
     if (!deckName) continue;
 
-    const current = deckMap.get(deckName) ?? { games: 0, wins: 0 };
+    const current = deckMap.get(deckName) ?? {
+      games: 0,
+      wins: 0,
+      funSelf: [],
+      funOthers: []
+    };
     current.games += 1;
 
     // Current assumption: winner is a win/loss flag (1 = win, 0 = loss).
     // If your sheet uses 1–4 "winner seat", this logic needs to change.
     if (g.winner === 1) current.wins += 1;
 
+    if (g.fun !== null) current.funSelf.push(g.fun);
+    if (g.p2Fun !== null) current.funOthers.push(g.p2Fun);
+    if (g.p3Fun !== null) current.funOthers.push(g.p3Fun);
+    if (g.p4Fun !== null) current.funOthers.push(g.p4Fun);
+
     deckMap.set(deckName, current);
 
   }
 
   const deckStats: DeckStats[] = [];
-  for (const [name, { games: gCount, wins }] of deckMap.entries()) {
+  for (const [name, { games: gCount, wins, funSelf, funOthers }] of deckMap.entries()) {
     const losses = Math.max(gCount - wins, 0);
     deckStats.push({
       name,
@@ -97,7 +118,9 @@ export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> =
       wins,
       losses,
       winRate: gCount > 0 ? (wins / gCount) * 100 : 0,
-      usagePercent: 0 // filled below
+      usagePercent: 0, // filled below
+      avgFunSelf: average(funSelf),
+      avgFunOthers: average(funOthers)
     });
   }
 

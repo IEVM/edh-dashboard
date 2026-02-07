@@ -1,5 +1,6 @@
 <script lang="ts">
 	import WRBar from '$lib/components/WRBar.svelte';
+	import DeckStatsTable from '$lib/components/DeckStatsTable.svelte';
 	import type { Stats } from '$lib/data/restructure';
 	import type { DeckStats } from './+page.server';
 
@@ -26,6 +27,15 @@
 	$: bestDeck =
 		deckStats.length > 0 ? [...deckStats].sort((a, b) => b.winRate - a.winRate)[0] : null;
 
+	function bestByFun(key: 'avgFunSelf' | 'avgFunOthers') {
+		const candidates = deckStats.filter((d) => d[key] != null);
+		if (!candidates.length) return null;
+		return [...candidates].sort((a, b) => (b[key] ?? 0) - (a[key] ?? 0))[0];
+	}
+
+	$: bestFunSelf = bestByFun('avgFunSelf');
+	$: bestFunOthers = bestByFun('avgFunOthers');
+
 	// Colors for the pie segments (reused in legend)
 	const pieColors = [
 		'hsl(14, 90%, 57%)', // red-ish
@@ -43,9 +53,36 @@
 		return `${x.toFixed(1)}%`;
 	}
 
+	function fmtScore(value: number | null | undefined): string {
+		if (value == null || Number.isNaN(value)) return '-';
+		return value.toFixed(1);
+	}
+
 	function deckHref(name: string) {
 		return `/dashboard/${encodeURIComponent(name)}`;
 	}
+
+	const overviewColumns = [
+		{ key: 'games', label: 'Games', align: 'right', format: 'games', hideOnMobile: false },
+		{ key: 'winRate', label: 'Winrate', align: 'right', format: 'percent', hideOnMobile: true },
+		{ key: 'usagePercent', label: 'Usage', align: 'right', format: 'percent', hideOnMobile: true }
+	];
+
+	const detailColumns = [
+		{ key: 'games', label: 'Games', align: 'right', format: 'number' },
+		{ key: 'wins', label: 'Wins', align: 'right', format: 'number' },
+		{ key: 'losses', label: 'Losses', align: 'right', format: 'number' },
+		{ key: 'winRate', label: 'Win rate', align: 'right', format: 'percent' },
+		{ key: 'avgFunSelf', label: 'Avg fun you', align: 'right', format: 'score', hideOnMobile: true },
+		{
+			key: 'avgFunOthers',
+			label: 'Avg fun others',
+			align: 'right',
+			format: 'score',
+			hideOnMobile: true
+		},
+		{ key: 'usagePercent', label: 'Usage', align: 'right', format: 'percent', showBar: true }
+	];
 
 	// Pie chart using conic-gradient
 	$: pieGradient = (() => {
@@ -113,36 +150,17 @@
 			</div>
 
 			<div class="space-y-3">
-				<div
-					class="flex items-center justify-between text-xs text-surface-400 uppercase tracking-wide"
-				>
-					<span>Deck</span>
-					<span class="flex gap-6">
-						<span class="w-12 text-right">Games</span>
-						<span class="w-16 text-right">Winrate</span>
-						<span class="w-16 text-right">Usage</span>
-					</span>
-				</div>
-
-				<ul class="space-y-2">
-					{#each deckStats as d, i}
-						<li class="flex items-center gap-3 text-sm">
-							<span
-								class="inline-block w-3 h-3 rounded-full"
-								style={`background: ${pieColors[i % pieColors.length]}`}
-							/>
-							<a
-								class="truncate text-primary-300 hover:text-primary-200 underline underline-offset-2"
-								href={deckHref(d.name)}
-							>
-								{d.name}
-							</a>
-							<span class="ml-auto text-surface-300">
-								{d.games} game{d.games === 1 ? '' : 's'}
-							</span>
-						</li>
-					{/each}
-				</ul>
+				<div class="text-xs text-surface-400 uppercase tracking-wide">Deck overview</div>
+		<DeckStatsTable
+			rows={deckStats}
+			columns={overviewColumns}
+			colors={pieColors}
+			showColorDot={true}
+			linkBase="/dashboard"
+			sortable={true}
+			initialSortKey="games"
+			initialSortDir="desc"
+		/>
 			</div>
 		</div>
 
@@ -177,11 +195,9 @@
 		{/if}
 
 		<!-- 4) Best deck highlight -->
-		{#if bestDeck}
-			<div
-				class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-3"
-			>
-				<div>
+		<div class="grid gap-4 md:grid-cols-3">
+			{#if bestDeck}
+				<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm">
 					<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">Best deck by win rate</p>
 					<p class="text-xl font-semibold">
 						<a
@@ -194,13 +210,57 @@
 					<p class="text-xs text-surface-400 mt-1">
 						{bestDeck.games} game{bestDeck.games === 1 ? '' : 's'} played.
 					</p>
-				</div>
-				<div class="flex flex-col items-end">
-					<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">Win rate</p>
+					<p class="text-xs text-surface-400 mt-2">Win rate</p>
 					<p class="text-2xl font-semibold">{fmtPct(bestDeck.winRate)}</p>
 				</div>
+			{/if}
+
+			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm">
+				<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">
+					Highest avg fun score
+				</p>
+				{#if bestFunSelf}
+					<p class="text-xl font-semibold">
+						<a
+							class="text-primary-300 hover:text-primary-200 underline underline-offset-2"
+							href={deckHref(bestFunSelf.name)}
+						>
+							{bestFunSelf.name}
+						</a>
+					</p>
+					<p class="text-xs text-surface-400 mt-1">
+						{bestFunSelf.games} game{bestFunSelf.games === 1 ? '' : 's'} played.
+					</p>
+					<p class="text-xs text-surface-400 mt-2">Avg fun (you)</p>
+					<p class="text-2xl font-semibold">{fmtScore(bestFunSelf.avgFunSelf)}</p>
+				{:else}
+					<p class="text-sm text-surface-400">No fun scores recorded yet.</p>
+				{/if}
 			</div>
-		{/if}
+
+			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm">
+				<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">
+					Best opponent avg fun score
+				</p>
+				{#if bestFunOthers}
+					<p class="text-xl font-semibold">
+						<a
+							class="text-primary-300 hover:text-primary-200 underline underline-offset-2"
+							href={deckHref(bestFunOthers.name)}
+						>
+							{bestFunOthers.name}
+						</a>
+					</p>
+					<p class="text-xs text-surface-400 mt-1">
+						{bestFunOthers.games} game{bestFunOthers.games === 1 ? '' : 's'} played.
+					</p>
+					<p class="text-xs text-surface-400 mt-2">Avg fun (others)</p>
+					<p class="text-2xl font-semibold">{fmtScore(bestFunOthers.avgFunOthers)}</p>
+				{:else}
+					<p class="text-sm text-surface-400">No opponent fun scores recorded yet.</p>
+				{/if}
+			</div>
+		</div>
 
 		<!-- 5) Detailed table -->
 		<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm">
@@ -208,52 +268,14 @@
 				<p class="text-xs text-surface-400 uppercase tracking-wide">Deck details</p>
 				<p class="text-xs text-surface-400">Sorted by games played.</p>
 			</div>
-
-			<div class="overflow-x-auto -mx-2 sm:mx-0">
-				<table class="w-full text-sm min-w-[640px]">
-				<thead class="text-xs text-surface-400 border-b border-surface-700/60">
-					<tr>
-						<th class="py-2 text-left">Deck</th>
-						<th class="py-2 text-right">Games</th>
-						<th class="py-2 text-right">Wins</th>
-						<th class="py-2 text-right">Losses</th>
-						<th class="py-2 text-right">Win rate</th>
-						<th class="py-2 text-right">Usage</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each deckStats as d}
-						<tr class="border-t border-surface-800/60">
-							<td class="py-2 pr-2">
-								<a
-									class="truncate block max-w-xs text-primary-300 hover:text-primary-200 underline underline-offset-2"
-									href={deckHref(d.name)}
-								>
-									{d.name}
-								</a>
-							</td>
-							<td class="py-2 text-right">{d.games}</td>
-							<td class="py-2 text-right">{d.wins}</td>
-							<td class="py-2 text-right">{d.losses}</td>
-							<td class="py-2 text-right">{fmtPct(d.winRate)}</td>
-							<td class="py-2 text-right">
-								<div class="flex items-center justify-end gap-2">
-									<div class="w-16 h-1.5 bg-surface-900 rounded-full overflow-hidden">
-										<div
-											class="h-full bg-primary-500"
-											style={`width: ${d.usagePercent.toFixed(1)}%`}
-										/>
-									</div>
-									<span class="text-xs text-surface-300 w-12 text-right">
-										{fmtPct(d.usagePercent)}
-									</span>
-								</div>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-				</table>
-			</div>
+			<DeckStatsTable
+				rows={deckStats}
+				columns={detailColumns}
+				linkBase="/dashboard"
+				sortable={true}
+				initialSortKey="games"
+				initialSortDir="desc"
+			/>
 		</div>
 	{/if}
 </div>
