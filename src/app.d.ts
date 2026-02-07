@@ -4,6 +4,7 @@
 declare namespace App {
 	interface Locals {
 		sessionId: string;
+		requestId?: string;
 	}
 	// interface PageData {}
 	// interface Error {}

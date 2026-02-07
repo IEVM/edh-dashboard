@@ -15,7 +15,9 @@ import { GET as authCallback } from '../../src/routes/api/auth/google/callback/+
 
 describe('GET /api/auth/google', () => {
 	it('redirects to the Google auth URL', async () => {
-		await expect(startAuth()).rejects.toMatchObject({
+		await expect(
+			startAuth({ locals: { sessionId: 'session-1', requestId: 'req-1' } } as any)
+		).rejects.toMatchObject({
 			status: 302,
 			location: 'https://accounts.google.com/o/oauth2/v2/auth'
 		});
