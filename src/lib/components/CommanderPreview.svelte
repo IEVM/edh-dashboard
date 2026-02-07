@@ -68,7 +68,7 @@
 >
 	<!-- Deck title + link -->
 	<div class="flex items-center justify-between gap-2">
-		<div class="flex flex-col">
+		<div class="flex flex-col w-full">
 			<span class="font-semibold">
 				{#if deckName}
 					<a href="/dashboard/{encodeURIComponent(deckName)}">{deckName}</a>
@@ -82,7 +82,7 @@
 			</span>
 
 			{#if image}
-				<a href="/dashboard/{encodeURIComponent(deckName || remoteName)}">
+				<a href="/dashboard/{encodeURIComponent(deckName || remoteName)}" class="block">
 					<img
 						src={image}
 						alt={deckName || remoteName}
