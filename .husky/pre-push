@@ -1,9 +1,26 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-if command -v npm >/dev/null 2>&1; then
+set -eu
+
+run_check() {
 	npm run pre-push-check
+}
+
+export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
+
+if command -v npm >/dev/null 2>&1; then
+	run_check
 	exit $?
+fi
+
+if command -v node >/dev/null 2>&1; then
+	NODE_BIN="$(command -v node)"
+	NPM_BIN="$(dirname "$NODE_BIN")/npm"
+	if [ -x "$NPM_BIN" ]; then
+		"$NPM_BIN" run pre-push-check
+		exit $?
+	fi
 fi
 
 export NVM_DIR="$HOME/.nvm"
@@ -19,11 +36,21 @@ if [ -s "$HOME/.asdf/asdf.sh" ]; then
 	. "$HOME/.asdf/asdf.sh"
 fi
 
-export PATH="/usr/local/bin:/usr/bin:$PATH"
-
-if ! command -v npm >/dev/null 2>&1; then
-	echo "npm not found in PATH. Ensure Node is available in git hooks."
-	exit 1
+if [ -s "$HOME/.volta/load.sh" ]; then
+	. "$HOME/.volta/load.sh"
 fi
 
-npm run pre-push-check
+if command -v npm >/dev/null 2>&1; then
+	run_check
+	exit $?
+fi
+
+if [ -n "${SHELL:-}" ]; then
+	"$SHELL" -lc "npm run pre-push-check"
+	exit $?
+fi
+
+echo "npm not found in PATH. Ensure Node is available in git hooks."
+echo "PATH=$PATH"
+echo "node=$(command -v node || true)"
+exit 1
