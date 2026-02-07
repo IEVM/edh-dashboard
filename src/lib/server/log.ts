@@ -61,9 +61,9 @@ function sanitizeValue(value: unknown): unknown {
 
 function sanitizeContext(context: Record<string, unknown>) {
 	const sanitized = sanitizeValue(context);
-	return (sanitized && typeof sanitized === 'object' && !Array.isArray(sanitized)
-		? sanitized
-		: {}) as Record<string, unknown>;
+	return (
+		sanitized && typeof sanitized === 'object' && !Array.isArray(sanitized) ? sanitized : {}
+	) as Record<string, unknown>;
 }
 
 export function logEvent(level: LogLevel, event: string, context: Record<string, unknown> = {}) {
