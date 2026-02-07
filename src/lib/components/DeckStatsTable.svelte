@@ -44,9 +44,9 @@
 	function formatValue(row: DeckStatsRow, column: DeckStatsColumn): string {
 		const value = row[column.key] as number | null | undefined;
 		if (value == null || Number.isNaN(value)) return '-';
-		const format = column.format ?? (column.key === 'winRate' || column.key === 'usagePercent'
-			? 'percent'
-			: 'number');
+		const format =
+			column.format ??
+			(column.key === 'winRate' || column.key === 'usagePercent' ? 'percent' : 'number');
 
 		if (format === 'percent') return `${value.toFixed(1)}%`;
 		if (format === 'score') return `${value.toFixed(1)}`;

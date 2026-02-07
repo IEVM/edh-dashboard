@@ -9,13 +9,13 @@ import { getSessionData } from '$lib/server/session';
  * session has Google OAuth tokens stored.
  */
 export const load: LayoutServerLoad = async ({ locals, url }) => {
-  const isAuthenticated = await hasTokens(locals.sessionId);
-  const databaseSheetId = await getSessionData<string>(locals.sessionId, 'databaseSheetId');
-  const hasDatabase = !!databaseSheetId;
+	const isAuthenticated = await hasTokens(locals.sessionId);
+	const databaseSheetId = await getSessionData<string>(locals.sessionId, 'databaseSheetId');
+	const hasDatabase = !!databaseSheetId;
 
-  return {
-    isAuthenticated,
-    hasDatabase,
-    currentPath: url.pathname
-  };
+	return {
+		isAuthenticated,
+		hasDatabase,
+		currentPath: url.pathname
+	};
 };

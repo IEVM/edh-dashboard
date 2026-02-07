@@ -132,7 +132,9 @@
 	</main>
 
 	<footer class="border-t border-surface-700/60 bg-surface-900/95">
-		<div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-xs text-surface-400">
+		<div
+			class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-xs text-surface-400"
+		>
 			<span>EDH Dashboard</span>
 			<span>Built with SvelteKit</span>
 		</div>

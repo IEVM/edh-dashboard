@@ -4,12 +4,12 @@ import { env } from '$env/dynamic/private';
 import { kvGet, kvSet } from './kv';
 
 const SCOPES = [
-  'openid',
-  'email',
-  'profile',
-  'https://www.googleapis.com/auth/drive.metadata.readonly',
-  'https://www.googleapis.com/auth/spreadsheets',
-  'https://www.googleapis.com/auth/drive.file'
+	'openid',
+	'email',
+	'profile',
+	'https://www.googleapis.com/auth/drive.metadata.readonly',
+	'https://www.googleapis.com/auth/spreadsheets',
+	'https://www.googleapis.com/auth/drive.file'
 ];
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
@@ -21,11 +21,11 @@ const tokensKey = (sessionId: string) => `google:tokens:${sessionId}`;
  * Note: This is stateless; credentials (tokens) are applied per request via `setCredentials`.
  */
 function createOAuthClient() {
-  return new google.auth.OAuth2(
-    env.GOOGLE_CLIENT_ID,
-    env.GOOGLE_CLIENT_SECRET,
-    env.GOOGLE_REDIRECT_URI
-  );
+	return new google.auth.OAuth2(
+		env.GOOGLE_CLIENT_ID,
+		env.GOOGLE_CLIENT_SECRET,
+		env.GOOGLE_REDIRECT_URI
+	);
 }
 
 /**
@@ -36,12 +36,12 @@ function createOAuthClient() {
  * @returns URL to redirect the user to for Google sign-in/consent.
  */
 export function getAuthUrl() {
-  const oauth2Client = createOAuthClient();
-  return oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-    prompt: 'consent'
-  });
+	const oauth2Client = createOAuthClient();
+	return oauth2Client.generateAuthUrl({
+		access_type: 'offline',
+		scope: SCOPES,
+		prompt: 'consent'
+	});
 }
 
 /**
@@ -52,12 +52,12 @@ export function getAuthUrl() {
  * @returns         The token bundle returned by Google (access/refresh/etc).
  */
 export async function handleAuthCode(sessionId: string, code: string) {
-  const oauth2Client = createOAuthClient();
-  const { tokens } = await oauth2Client.getToken(code);
+	const oauth2Client = createOAuthClient();
+	const { tokens } = await oauth2Client.getToken(code);
 
-  await kvSet(tokensKey(sessionId), tokens, TOKEN_TTL_SECONDS);
+	await kvSet(tokensKey(sessionId), tokens, TOKEN_TTL_SECONDS);
 
-  return tokens;
+	return tokens;
 }
 
 /**
@@ -65,18 +65,18 @@ export async function handleAuthCode(sessionId: string, code: string) {
  * Useful if you refresh tokens elsewhere and want to persist the updated set.
  */
 export async function saveTokens(sessionId: string, tokens: Credentials) {
-  await kvSet(tokensKey(sessionId), tokens, TOKEN_TTL_SECONDS);
+	await kvSet(tokensKey(sessionId), tokens, TOKEN_TTL_SECONDS);
 }
 
 /** @returns tokens for a session or undefined if not authenticated. */
 export async function getTokens(sessionId: string) {
-  return await kvGet<Credentials>(tokensKey(sessionId));
+	return await kvGet<Credentials>(tokensKey(sessionId));
 }
 
 /** @returns true if we have tokens stored for this session. */
 export async function hasTokens(sessionId: string) {
-  const tokens = await getTokens(sessionId);
-  return !!tokens;
+	const tokens = await getTokens(sessionId);
+	return !!tokens;
 }
 
 /**
@@ -85,15 +85,15 @@ export async function hasTokens(sessionId: string) {
  * @throws Error if no tokens are stored for this sessionId.
  */
 export async function getSheetsClient(sessionId: string) {
-  const tokens = await getTokens(sessionId);
-  if (!tokens) {
-    throw new Error('Not authenticated');
-  }
+	const tokens = await getTokens(sessionId);
+	if (!tokens) {
+		throw new Error('Not authenticated');
+	}
 
-  const oauth2Client = createOAuthClient();
-  oauth2Client.setCredentials(tokens);
+	const oauth2Client = createOAuthClient();
+	oauth2Client.setCredentials(tokens);
 
-  return google.sheets({ version: 'v4', auth: oauth2Client });
+	return google.sheets({ version: 'v4', auth: oauth2Client });
 }
 
 /**
@@ -102,13 +102,13 @@ export async function getSheetsClient(sessionId: string) {
  * @throws Error if no tokens are stored for this sessionId.
  */
 export async function getDriveClient(sessionId: string) {
-  const tokens = await getTokens(sessionId);
-  if (!tokens) {
-    throw new Error('Not authenticated');
-  }
+	const tokens = await getTokens(sessionId);
+	if (!tokens) {
+		throw new Error('Not authenticated');
+	}
 
-  const oauth2Client = createOAuthClient();
-  oauth2Client.setCredentials(tokens);
+	const oauth2Client = createOAuthClient();
+	oauth2Client.setCredentials(tokens);
 
-  return google.drive({ version: 'v3', auth: oauth2Client });
+	return google.drive({ version: 'v3', auth: oauth2Client });
 }

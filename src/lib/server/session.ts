@@ -15,9 +15,9 @@ const sessionKey = (sessionId: string) => `session:${sessionId}`;
  * @param value     Any serializable value you want to keep for the session lifetime
  */
 export async function setSessionData(sessionId: string, key: string, value: unknown) {
-  const data = (await kvGet<SessionData>(sessionKey(sessionId))) ?? {};
-  data[key] = value;
-  await kvSet(sessionKey(sessionId), data, SESSION_TTL_SECONDS);
+	const data = (await kvGet<SessionData>(sessionKey(sessionId))) ?? {};
+	data[key] = value;
+	await kvSet(sessionKey(sessionId), data, SESSION_TTL_SECONDS);
 }
 
 /**
@@ -28,11 +28,11 @@ export async function setSessionData(sessionId: string, key: string, value: unkn
  * @returns         The stored value (typed via generic), or undefined if missing
  */
 export async function getSessionData<T = unknown>(
-  sessionId: string,
-  key: string
+	sessionId: string,
+	key: string
 ): Promise<T | undefined> {
-  const data = await kvGet<SessionData>(sessionKey(sessionId));
-  return data ? (data[key] as T) : undefined;
+	const data = await kvGet<SessionData>(sessionKey(sessionId));
+	return data ? (data[key] as T) : undefined;
 }
 
 /**
@@ -42,6 +42,6 @@ export async function getSessionData<T = unknown>(
  * @param key       Property name within the session object
  */
 export async function hasSessionData(sessionId: string, key: string) {
-  const data = await kvGet<SessionData>(sessionKey(sessionId));
-  return data ? key in data : false;
+	const data = await kvGet<SessionData>(sessionKey(sessionId));
+	return data ? key in data : false;
 }

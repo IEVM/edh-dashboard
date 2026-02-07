@@ -5,8 +5,8 @@
 <header class="space-y-2">
 	<h1 class="text-3xl font-semibold">How to use this EDH tracker</h1>
 	<p class="text-surface-300 text-sm">
-		This site helps you track your Commander games using your own Google Sheets as a database.
-		Here is how to set it up and why it needs certain permissions.
+		This site helps you track your Commander games using your own Google Sheets as a database. Here
+		is how to set it up and why it needs certain permissions.
 	</p>
 </header>
 
@@ -39,7 +39,8 @@
 	<p class="text-sm text-surface-200">
 		In your database spreadsheet, use the deck sheet (for example a tab called <strong>Decks</strong
 		>) to enter one row per deck. Add details like the deck name, commander or Archidekt link, and a
-		short summary. The website uses this information to power commander previews and deck statistics.
+		short summary. The website uses this information to power commander previews and deck
+		statistics.
 	</p>
 </section>
 
@@ -59,10 +60,11 @@
 	<h2 class="text-lg font-semibold">4) Analyze your data with dashboards</h2>
 	<p class="text-sm text-surface-200">
 		Once you have logged some games, go to the
-		<a href="/dashboard" class="text-primary-300 hover:text-primary-200 underline underline-offset-2"
-			>Dashboard</a
-		>. You will see a pie chart of which decks you play the most, total games played, win rates
-		per deck, and other statistics. The more games you record, the more accurate these insights become.
+		<a
+			href="/dashboard"
+			class="text-primary-300 hover:text-primary-200 underline underline-offset-2">Dashboard</a
+		>. You will see a pie chart of which decks you play the most, total games played, win rates per
+		deck, and other statistics. The more games you record, the more accurate these insights become.
 	</p>
 </section>
 

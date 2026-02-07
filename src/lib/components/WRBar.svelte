@@ -3,7 +3,7 @@
 	export let expectedWinrate: number;
 	export let width: number = 2;
 
-    /** Formats a number already in 0..100 percent. */
+	/** Formats a number already in 0..100 percent. */
 	function fmtPct(x: number): string {
 		return `${(100 * x).toFixed(1)}%`;
 	}

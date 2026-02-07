@@ -33,6 +33,7 @@ Die Daten werden in **deinem eigenen Google Spreadsheet** gespeichert (als “Da
 
 Standard **SvelteKit** Projektstruktur.  
 Das Projekt besteht aus:
+
 - UI (Svelte + Skeleton + Tailwind)
 - Server-seitiger OAuth2-Flow
 - Google Sheets Integration (Lesen/Schreiben ins ausgewählte Sheet)
@@ -56,11 +57,13 @@ npm install
 ### Environment konfigurieren
 
 1. Kopiere die Example-Env:
+
 ```bash
 cp .env.example .env
 ```
 
 2. Trage deine Google OAuth Werte ein (genaue Variablennamen siehe `.env.example`), typischerweise:
+
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_CALLBACK_URL` / `GOOGLE_REDIRECT_URI`
@@ -86,10 +89,10 @@ Danach im Browser öffnen (typisch SvelteKit dev URL):
 
 ## Nutzung
 
-1. Mit Google Account anmelden  
-2. Ein Spreadsheet auswählen, das als Datenbank dient  
-3. Alternativ: Ein **leeres Sheet im richtigen Format** erstellen lassen  
-4. Oder: Ein **Test-Sheet** generieren lassen (ca. 5000 Matches + Deckliste)  
+1. Mit Google Account anmelden
+2. Ein Spreadsheet auswählen, das als Datenbank dient
+3. Alternativ: Ein **leeres Sheet im richtigen Format** erstellen lassen
+4. Oder: Ein **Test-Sheet** generieren lassen (ca. 5000 Matches + Deckliste)
 5. Partien tracken, Auswertungen im Dashboard anschauen
 
 ---
@@ -116,11 +119,13 @@ Pull Requests deployen eine Vercel Preview und posten die Preview URL im PR.
 Pushes nach main deployen in Vercel Production.
 
 Umgebungsvariablen
+
 - Google OAuth Secrets liegen in den Vercel Umgebungen Preview und Production
 - Upstash Redis Env Vars liegen in den Vercel Umgebungen Preview und Production
 - GitHub Environments enthalten nur die Vercel Deploy Credentials und nur nicht sensible Build Time Variablen falls nötig
 
 Erforderliche GitHub Environment Secrets
+
 - Preview Environment
 - VERCEL_TOKEN für Vercel API Zugriff
 - VERCEL_ORG_ID für die Vercel Organisation
@@ -131,6 +136,7 @@ Erforderliche GitHub Environment Secrets
 - VERCEL_PROJECT_ID für das Vercel Projekt
 
 Upstash Redis Environment Variablen in Vercel
+
 - UPSTASH_REDIS_REST_URL
 - UPSTASH_REDIS_REST_TOKEN
 
@@ -138,7 +144,7 @@ Upstash Redis Environment Variablen in Vercel
 
 ## License
 
-**MIT License**  
+**MIT License**
 
 ---
 

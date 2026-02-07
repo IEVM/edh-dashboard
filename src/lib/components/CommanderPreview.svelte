@@ -67,7 +67,9 @@
 	}
 </script>
 
-<div class="p-2 rounded-lg bg-surface-800 border border-surface-700/60 space-y-2 w-full max-w-[18rem]">
+<div
+	class="p-2 rounded-lg bg-surface-800 border border-surface-700/60 space-y-2 w-full max-w-[18rem]"
+>
 	<!-- Deck title + link -->
 	<div class="flex items-center justify-between gap-2">
 		<div class="flex flex-col">
@@ -93,7 +95,10 @@
 				</a>
 			{:else if link.error || fetchError || !link.url}
 				<div
-					class="w-full aspect-[3/2] rounded-md border border-surface-700/60 bg-surface-900/40 flex items-center justify-center text-xs text-center px-3 {link.error || fetchError ? 'text-error-400' : 'text-surface-400'}"
+					class="w-full aspect-[3/2] rounded-md border border-surface-700/60 bg-surface-900/40 flex items-center justify-center text-xs text-center px-3 {link.error ||
+					fetchError
+						? 'text-error-400'
+						: 'text-surface-400'}"
 				>
 					{link.error ?? fetchError ?? 'No deck link.'}
 				</div>
@@ -118,9 +123,10 @@
 
 	<!-- Summary -->
 	{#if summary}
-		<p class="text-xs text-surface-300 text-left max-w-full sm:max-w-[250px] break-words whitespace-normal">
+		<p
+			class="text-xs text-surface-300 text-left max-w-full sm:max-w-[250px] break-words whitespace-normal"
+		>
 			{summary}
 		</p>
 	{/if}
-
 </div>

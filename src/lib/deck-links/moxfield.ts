@@ -32,7 +32,10 @@ function extractImageFromCard(card: any): string {
 	}
 
 	const scryfallId =
-		card?.scryfall_id ?? card?.scryfallId ?? card?.scryfallCard?.id ?? card?.scryfallCard?.scryfall_id;
+		card?.scryfall_id ??
+		card?.scryfallId ??
+		card?.scryfallCard?.id ??
+		card?.scryfallCard?.scryfall_id;
 	if (typeof scryfallId === 'string' && scryfallId.length >= 2) {
 		const a = scryfallId[0];
 		const b = scryfallId[1];

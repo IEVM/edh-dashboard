@@ -73,7 +73,13 @@
 		{ key: 'wins', label: 'Wins', align: 'right', format: 'number' },
 		{ key: 'losses', label: 'Losses', align: 'right', format: 'number' },
 		{ key: 'winRate', label: 'Win rate', align: 'right', format: 'percent' },
-		{ key: 'avgFunSelf', label: 'Avg fun you', align: 'right', format: 'score', hideOnMobile: true },
+		{
+			key: 'avgFunSelf',
+			label: 'Avg fun you',
+			align: 'right',
+			format: 'score',
+			hideOnMobile: true
+		},
 		{
 			key: 'avgFunOthers',
 			label: 'Avg fun others',
@@ -151,16 +157,16 @@
 
 			<div class="space-y-3">
 				<div class="text-xs text-surface-400 uppercase tracking-wide">Deck overview</div>
-		<DeckStatsTable
-			rows={deckStats}
-			columns={overviewColumns}
-			colors={pieColors}
-			showColorDot={true}
-			linkBase="/dashboard"
-			sortable={true}
-			initialSortKey="games"
-			initialSortDir="desc"
-		/>
+				<DeckStatsTable
+					rows={deckStats}
+					columns={overviewColumns}
+					colors={pieColors}
+					showColorDot={true}
+					linkBase="/dashboard"
+					sortable={true}
+					initialSortKey="games"
+					initialSortDir="desc"
+				/>
 			</div>
 		</div>
 
@@ -216,9 +222,7 @@
 			{/if}
 
 			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm">
-				<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">
-					Highest avg fun score
-				</p>
+				<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">Highest avg fun score</p>
 				{#if bestFunSelf}
 					<p class="text-xl font-semibold">
 						<a
