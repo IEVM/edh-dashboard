@@ -11,21 +11,12 @@ export function getPrisma() {
 	if (globalForPrisma.prisma) return globalForPrisma.prisma;
 
 	const connectionString =
-		env.POSTGRES_URL_OVERRIDE ??
-		env.POSTGRES_URL_NON_POOLING ??
-		env.POSTGRES_PRISMA_URL ??
-		env.POSTGRES_URL ??
-		'';
+		env.POSTGRES_URL_NON_POOLING ?? env.POSTGRES_PRISMA_URL ?? env.POSTGRES_URL ?? '';
 	if (!connectionString) {
 		throw new Error('POSTGRES_PRISMA_URL is not configured');
 	}
 
-	const rejectUnauthorized = env.POSTGRES_SSL_REJECT_UNAUTHORIZED;
-	const ssl =
-		rejectUnauthorized && rejectUnauthorized.toLowerCase() === 'false'
-			? { rejectUnauthorized: false }
-			: undefined;
-	const pool = new Pool({ connectionString, ssl });
+	const pool = new Pool({ connectionString });
 	const adapter = new PrismaPg(pool);
 	const client = new PrismaClient({
 		log: ['error'],
