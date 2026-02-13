@@ -1,4 +1,5 @@
 import type { PageServerLoad } from './$types';
+import { dev } from '$app/environment';
 import { getDataManager, DataManagerError } from '$lib/server/data-manager';
 import type { Deck } from '$lib/data/restructure';
 
@@ -20,6 +21,11 @@ export const load: PageServerLoad = async ({ locals }): Promise<DecksPageData> =
 		return { decks };
 	} catch (err) {
 		if (err instanceof DataManagerError) {
+			return { error: err.message, decks: [] };
+		}
+
+		console.error('Error loading decks', err);
+		if (dev && err instanceof Error) {
 			return { error: err.message, decks: [] };
 		}
 
