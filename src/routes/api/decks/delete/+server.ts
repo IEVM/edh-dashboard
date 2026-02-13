@@ -14,7 +14,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	}
 
 	try {
-		const manager = await getDataManager(locals.sessionId as string);
+		const manager = await getDataManager(locals);
 		const deletedGames = await manager.deleteDeck(deckId, deckName);
 		return json({ ok: true, deletedGames });
 	} catch (err) {

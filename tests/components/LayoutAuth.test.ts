@@ -32,8 +32,8 @@ describe('Layout auth state', () => {
 			}
 		});
 
-		expect(getByText('Google connection lost. Reconnect to continue.')).toBeTruthy();
-		expect(getByRole('button', { name: 'Reconnect Google' })).toBeTruthy();
+		expect(getByText('Session expired. Sign in to continue.')).toBeTruthy();
+		expect(getByRole('button', { name: 'Sign in' })).toBeTruthy();
 	});
 
 	it('shows nav items when authenticated and database is linked', () => {

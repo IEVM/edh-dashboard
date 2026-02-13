@@ -1,9 +1,8 @@
 import type { PageServerLoad } from './$types';
-import type { UserProfile } from '$lib/server/google';
-import { getSessionData } from '$lib/server/session';
+import { getAuthUser } from '$lib/server/auth';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const user = (await getSessionData<UserProfile>(locals.sessionId, 'userProfile')) ?? null;
+	const user = await getAuthUser(locals);
 
 	return { backend: 'db', user };
 };

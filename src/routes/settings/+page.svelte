@@ -4,7 +4,7 @@
 		user: { name: string | null; email: string | null } | null;
 	};
 
-	const backendLabel = 'Postgres (Vercel)';
+	const backendLabel = 'Postgres (Supabase)';
 </script>
 
 <div class="space-y-6 max-w-4xl mx-auto">
@@ -30,7 +30,7 @@
 				Signed in as <span class="text-surface-100">{data.user?.name ?? data.user?.email}</span>
 			</p>
 		{:else}
-			<p class="text-sm text-surface-300">Sign in with Google to manage your data.</p>
+			<p class="text-sm text-surface-300">Sign in to manage your data.</p>
 		{/if}
 	</section>
 </div>

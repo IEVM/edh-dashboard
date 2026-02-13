@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ locals, params }): Promise<PageData
 	const deckNameParam = decodeURIComponent(params.deckName);
 
 	try {
-		const manager = await getDataManager(locals.sessionId as string);
+		const manager = await getDataManager(locals);
 		const deck: Deck | null = await manager.getDeckByName(deckNameParam);
 
 		if (!deck) {

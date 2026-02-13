@@ -14,7 +14,7 @@ type DecksPageData = {
  */
 export const load: PageServerLoad = async ({ locals }): Promise<DecksPageData> => {
 	try {
-		const manager = await getDataManager(locals.sessionId as string);
+		const manager = await getDataManager(locals);
 		const decks = await manager.getDecks();
 
 		if (!decks.length) {

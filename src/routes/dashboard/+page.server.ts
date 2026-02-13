@@ -25,7 +25,7 @@ type DashboardData = {
  */
 export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> => {
 	try {
-		const manager = await getDataManager(locals.sessionId as string);
+		const manager = await getDataManager(locals);
 		const { stats, deckStats } = await manager.getDashboardStats();
 
 		if (!stats) {

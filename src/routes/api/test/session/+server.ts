@@ -1,6 +1,5 @@
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
-import { clearTokens, saveTokens } from '$lib/server/google';
 import { setSessionData } from '$lib/server/session';
 
 type Body = {
@@ -20,22 +19,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	}
 
 	if (body.authenticated === true) {
-		await saveTokens(locals.sessionId, {
-			access_token: 'test-access',
-			refresh_token: 'test-refresh',
-			scope: 'openid email profile',
-			token_type: 'Bearer',
-			expiry_date: Date.now() + 60 * 60 * 1000
-		});
-		await setSessionData(locals.sessionId, 'userProfile', {
+		await setSessionData(locals.sessionId, 'testUser', {
 			id: 'test-user',
 			email: 'test@example.com',
 			name: 'Test User',
 			picture: 'https://example.com/avatar.png'
 		});
 	} else if (body.authenticated === false) {
-		await clearTokens(locals.sessionId);
-		await setSessionData(locals.sessionId, 'userProfile', null);
+		await setSessionData(locals.sessionId, 'testUser', null);
 	}
 
 	return new Response('ok');

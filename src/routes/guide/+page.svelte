@@ -11,10 +11,10 @@
 </header>
 
 <section class="space-y-2 p-4 rounded-xl bg-surface-800 border border-surface-700/40">
-	<h2 class="text-lg font-semibold">1) Sign in with Google</h2>
+	<h2 class="text-lg font-semibold">1) Sign in</h2>
 	<p class="text-sm text-surface-200">
-		Use the sign-in button in the top-right. Google login is only used for identity; your game data is
-		stored in the app database.
+		Use the sign-in button in the top-right. You can use Google (via Supabase) and we only use it for
+		identity. Your game data stays in the app database.
 	</p>
 </section>
 
@@ -47,9 +47,9 @@
 </section>
 
 <section class="space-y-2 p-4 rounded-xl bg-surface-800 border border-surface-700/40">
-	<h2 class="text-lg font-semibold">Why does this site need Google permissions?</h2>
+	<h2 class="text-lg font-semibold">Why does this site ask for Google permissions?</h2>
 	<p class="text-sm text-surface-200">
-		Only basic profile information (openid/email/profile) is requested so we can identify your account.
-		No access to your Google Drive or Sheets is required.
+		If you choose Google sign-in, Supabase requests basic profile info (openid/email/profile) to identify
+		your account. No access to Drive or Sheets is required.
 	</p>
 </section>

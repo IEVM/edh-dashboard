@@ -10,7 +10,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	}
 
 	try {
-		const manager = await getDataManager(locals.sessionId as string);
+		const manager = await getDataManager(locals);
 		await manager.deleteGame(gameId);
 	} catch (err) {
 		if (err instanceof DataManagerError) {

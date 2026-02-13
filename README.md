@@ -3,7 +3,7 @@
 [![CI](https://github.com/IEVM/edh-dashboard/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/IEVM/edh-dashboard/actions/workflows/ci-cd.yml)
 
 Ein Dashboard, mit dem du deine **Magic: The Gathering – Commander (EDH)** Partien tracken kannst.  
-Die Daten werden in **Postgres** gespeichert (Vercel Marketplace) – ohne dass du selbst eine Datenbank hosten musst.
+Die Daten werden in **Supabase Postgres** gespeichert – ohne dass du selbst eine Datenbank hosten musst.
 
 > Status: **Prototype / in Arbeit**
 
@@ -13,8 +13,8 @@ Live App: [edh-dashboard.vercel.app](https://edh-dashboard.vercel.app)
 
 ## Features
 
-- **Google Login (OAuth2)**: Anmelden mit deinem Google Account
-- **Postgres als Datenbank** (Vercel Marketplace)
+- **Supabase Auth (Google OAuth)**: Anmelden mit deinem Google Account
+- **Postgres als Datenbank** (Supabase)
 - **In-App Verwaltung**: Decks anlegen, Spiele loggen, Statistiken analysieren
 - **Deck-Thumbnails via Archidekt**  
   Wenn bei den Decks ein **Archidekt-Link** hinterlegt ist, bekommt jedes Deck ein kleines Thumbnail.
@@ -26,10 +26,10 @@ Live App: [edh-dashboard.vercel.app](https://edh-dashboard.vercel.app)
 - **SvelteKit** (Fullstack / App-Routing)
 - **Tailwind CSS**
 - **Skeleton UI**
-- **Google OAuth2**
-- **Postgres** (Vercel Marketplace)
+- **Supabase Auth**
+- **Postgres** (Supabase)
 - **Vercel** (Deployment)
-- **Upstash Redis** (Session und Token Store)
+- **Upstash Redis** (Session Store)
 - **Vitest** (Unit Tests)
 - **Playwright** (E2E Tests)
 - **ESLint + Prettier** (Linting und Formatierung)
@@ -42,7 +42,7 @@ Standard **SvelteKit** Projektstruktur.
 Das Projekt besteht aus:
 
 - UI (Svelte + Skeleton + Tailwind)
-- Server-seitiger OAuth2-Flow
+- Supabase Auth (OAuth via Supabase)
 - Postgres Integration (lesend/schreibend via DataManager)
 
 ---
@@ -50,8 +50,8 @@ Das Projekt besteht aus:
 ## Voraussetzungen
 
 - **Node.js / npm** (aktuelles LTS empfohlen)
-- Ein **Google Cloud Projekt** mit OAuth2 Credentials
-- **Vercel Postgres** (oder lokales Postgres)
+- Ein **Supabase Projekt** (Auth + Database)
+- **Supabase Postgres** (oder lokales Postgres)
 
 ---
 
@@ -69,20 +69,21 @@ npm install
 cp .env.example .env
 ```
 
-2. Trage deine Google OAuth Werte ein (genaue Variablennamen siehe `.env.example`), typischerweise:
+2. Trage deine Supabase Werte ein (genaue Variablennamen siehe `.env.example`), typischerweise:
 
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_CALLBACK_URL` / `GOOGLE_REDIRECT_URI`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `POSTGRES_URL`
 - `POSTGRES_PRISMA_URL` (Prisma; Connection String)
 - `POSTGRES_URL_NON_POOLING` (Prisma migrations)
 
-### Google OAuth2 (High-Level)
+### Supabase Auth (High-Level)
 
-- Erstelle in der **Google Cloud Console** OAuth2 Credentials (Web App)
-- Setze die **Authorized redirect URI** passend zu deinem Callback (z.B. dev: `http://localhost:5173/...`)
-- Trage Client ID / Secret / Callback in `.env` ein
+- Erstelle ein **Supabase Projekt**
+- Aktiviere den Google Provider unter **Authentication → Providers**
+- Trage `SUPABASE_URL` und `SUPABASE_ANON_KEY` in `.env` ein
 
 ---
 
@@ -109,7 +110,7 @@ Danach im Browser öffnen (typisch SvelteKit dev URL):
 
 ## Nutzung
 
-1. Mit Google Account anmelden
+1. Anmelden (Google via Supabase)
 2. Decks im **Decks**-Bereich anlegen
 3. Spiele im Deck-Detail hinzufügen
 4. Auswertungen im Dashboard anschauen
@@ -118,9 +119,8 @@ Danach im Browser öffnen (typisch SvelteKit dev URL):
 
 ## Limitations (aktuell)
 
-- **Keine Self-Hosted Datenbank / Token-Persistenz**
-  - Es werden keine Tokens in einer DB gespeichert
-  - Nach einem **Server-Restart** ist daher **ein erneuter Login nötig**
+- **Auth-Sessions sind Cookie-basiert**
+  - Wenn Cookies gelöscht werden, ist ein erneuter Login nötig
 
 ---
 
@@ -129,7 +129,7 @@ Danach im Browser öffnen (typisch SvelteKit dev URL):
 - Tests (z.B. Playwright/Vitest)
 - Linting/Formatting (ESLint/Prettier)
 - CI/CD (GitHub Actions)
-- Polishing: UX rund um Sheet-Setup + Fehlerbehandlung
+- Polishing: UX rund um Auth + Fehlerbehandlung
 
 ## CI/CD
 
@@ -139,7 +139,7 @@ Pushes nach main deployen in Vercel Production.
 
 Umgebungsvariablen
 
-- Google OAuth Secrets liegen in den Vercel Umgebungen Preview und Production
+- Supabase Keys liegen in den Vercel Umgebungen Preview und Production
 - Upstash Redis Env Vars liegen in den Vercel Umgebungen Preview und Production
 - Postgres Connection String liegt in den Vercel Umgebungen Preview und Production
 - GitHub Environments enthalten nur die Vercel Deploy Credentials und nur nicht sensible Build Time Variablen falls nötig
@@ -163,6 +163,15 @@ Upstash Redis Environment Variablen in Vercel
 Postgres Environment Variablen in Vercel
 
 - POSTGRES_URL
+- POSTGRES_PRISMA_URL
+- POSTGRES_URL_NON_POOLING
+
+Supabase Environment Variablen in Vercel
+
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 ---
 

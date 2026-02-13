@@ -10,9 +10,8 @@ import {
 	type Stats
 } from '$lib/data/restructure';
 import { E2E_DECKS_SHEET, E2E_GAMES_SHEET } from '$lib/server/e2e-fixtures';
-import { ensureUserProfile, type UserProfile } from '$lib/server/google';
-import { prisma } from '$lib/server/prisma';
-import { getSessionData } from '$lib/server/session';
+import type { AuthUser } from '$lib/server/auth';
+import { getPrisma } from '$lib/server/prisma';
 import {
 	DataManager,
 	DataManagerError,
@@ -26,24 +25,16 @@ import {
 
 export class DbDataManager extends DataManager {
 	spreadsheetId = 'db';
-	private user: UserProfile;
+	private user: AuthUser;
 	private useFixtures: boolean;
 
-	private constructor(user: UserProfile, useFixtures: boolean) {
+	private constructor(user: AuthUser, useFixtures: boolean) {
 		super();
 		this.user = user;
 		this.useFixtures = useFixtures;
 	}
 
-	static async create(sessionId: string) {
-		let user = await getSessionData<UserProfile>(sessionId, 'userProfile');
-		if (!user?.id) {
-			user = await ensureUserProfile(sessionId);
-		}
-		if (!user?.id) {
-			throw new DataManagerError('Not authenticated', 401);
-		}
-
+	static async create(user: AuthUser) {
 		const useFixtures = env.E2E_TEST_MODE === '1';
 		const manager = new DbDataManager(user, useFixtures);
 
@@ -52,6 +43,7 @@ export class DbDataManager extends DataManager {
 				throw new DataManagerError('Database not configured', 500);
 			}
 
+			const prisma = getPrisma();
 			await prisma.user.upsert({
 				where: { id: user.id },
 				create: {
@@ -123,11 +115,16 @@ export class DbDataManager extends DataManager {
 		};
 	}
 
+	private db() {
+		return getPrisma();
+	}
+
 	async getDecks(): Promise<Deck[]> {
 		if (this.useFixtures) {
 			return this.fixtureDecks();
 		}
 
+		const prisma = this.db();
 		const decks = await prisma.deck.findMany({
 			where: { userId: this.user.id },
 			orderBy: { name: 'asc' }
@@ -147,6 +144,7 @@ export class DbDataManager extends DataManager {
 			return this.fixtureGames();
 		}
 
+		const prisma = this.db();
 		const games = await prisma.game.findMany({
 			where: { userId: this.user.id },
 			orderBy: { createdAt: 'asc' },
@@ -234,6 +232,7 @@ export class DbDataManager extends DataManager {
 		return { stats, deckStats };
 	}
 
+	const prisma = this.db();
 	const statRows = (await prisma.$queryRaw`
 		select
 			count(*)::int as total_games,
@@ -336,6 +335,7 @@ export class DbDataManager extends DataManager {
 			return { ...deckWithGames, stats: statsFromGames(deckWithGames.games) };
 		}
 
+		const prisma = this.db();
 		const deckRecord = await prisma.deck.findFirst({
 			where: { userId: this.user.id, name },
 			select: {
@@ -381,6 +381,7 @@ export class DbDataManager extends DataManager {
 	private async getStatsForDeck(deckId: string): Promise<Stats | null> {
 		if (this.useFixtures) return null;
 
+		const prisma = this.db();
 		const rows = (await prisma.$queryRaw`
 			select
 				count(*)::int as total_games,
@@ -422,6 +423,7 @@ export class DbDataManager extends DataManager {
 	async appendDeck(input: DeckInput): Promise<void> {
 		if (this.useFixtures) return;
 
+		const prisma = this.db();
 		await prisma.deck.create({
 			data: {
 				id: randomUUID(),
@@ -437,6 +439,7 @@ export class DbDataManager extends DataManager {
 	async appendGame(input: GameInput): Promise<void> {
 		if (this.useFixtures) return;
 
+		const prisma = this.db();
 		const deck = await prisma.deck.findFirst({
 			where: { userId: this.user.id, name: input.deckName },
 			select: { id: true }
@@ -465,6 +468,7 @@ export class DbDataManager extends DataManager {
 	async updateDeck(input: DeckUpdateInput): Promise<void> {
 		if (this.useFixtures) return;
 
+		const prisma = this.db();
 		const result = await prisma.deck.updateMany({
 			where: { userId: this.user.id, id: input.deckId },
 			data: {
@@ -484,6 +488,7 @@ export class DbDataManager extends DataManager {
 	async updateGame(input: GameUpdateInput): Promise<void> {
 		if (this.useFixtures) return;
 
+		const prisma = this.db();
 		const result = await prisma.game.updateMany({
 			where: { userId: this.user.id, id: input.gameId },
 			data: {
@@ -505,6 +510,7 @@ export class DbDataManager extends DataManager {
 	async deleteGame(gameId: string): Promise<void> {
 		if (this.useFixtures) return;
 
+		const prisma = this.db();
 		const result = await prisma.game.deleteMany({
 			where: { userId: this.user.id, id: gameId }
 		});
@@ -517,6 +523,7 @@ export class DbDataManager extends DataManager {
 	async deleteDeck(deckId: string, _deckName: string): Promise<number> {
 		if (this.useFixtures) return 0;
 
+		const prisma = this.db();
 		const gameCount = await prisma.game.count({
 			where: { userId: this.user.id, deckId }
 		});
