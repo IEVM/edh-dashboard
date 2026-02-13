@@ -24,7 +24,6 @@ export function getPrisma() {
 		);
 	}
 
-	const isVercel = env.VERCEL === '1' || env.VERCEL === 'true';
 	const disableSslVerify =
 		isVercel ||
 		connectionString.includes('pooler.supabase.com') ||
