@@ -2,7 +2,6 @@
 	import '../app.postcss';
 
 	import { Avatar } from '@skeletonlabs/skeleton';
-	import { supabase } from '$lib/supabase/client';
 
 	export let data: {
 		isAuthenticated: boolean;
@@ -26,16 +25,9 @@
 	);
 	$: showSessionBanner = !data.isAuthenticated && requiresAuthForPath;
 
-	/**
-	 * Starts the Supabase OAuth flow for Google.
-	 */
-	async function signInWithGoogle() {
-		await supabase.auth.signInWithOAuth({
-			provider: 'google',
-			options: {
-				redirectTo: `${window.location.origin}/auth/callback`
-			}
-		});
+	function goToLogin() {
+		const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+		window.location.href = `/login?returnTo=${encodeURIComponent(current || '/')}`;
 	}
 </script>
 
@@ -99,9 +91,10 @@
 				{:else}
 					<button
 						class="btn variant-filled-primary-500 text-xs sm:text-sm px-3 sm:px-4 py-2"
-						on:click={signInWithGoogle}
+						type="button"
+						on:click={goToLogin}
 					>
-						Sign in with Google
+						Sign in
 					</button>
 				{/if}
 			</div>
@@ -116,7 +109,7 @@
 				<div class="text-sm text-error-200">Session expired. Sign in to continue.</div>
 				<button
 					class="btn variant-filled-primary-500 text-xs sm:text-sm px-3 sm:px-4 py-2"
-					on:click={signInWithGoogle}
+					on:click={goToLogin}
 				>
 					Sign in
 				</button>

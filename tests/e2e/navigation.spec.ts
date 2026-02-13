@@ -14,7 +14,7 @@ test('home page renders welcome copy and sign-in button', async ({ page }) => {
 	await page.goto('/');
 
 	await expect(page.getByRole('heading', { name: /welcome to your edh dashboard/i })).toBeVisible();
-	await expect(page.getByRole('button', { name: /sign in with google/i })).toBeVisible();
+	await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible();
 });
 
 test('nav shows items only when authenticated', async ({ page }) => {

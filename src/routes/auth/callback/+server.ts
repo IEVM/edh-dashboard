@@ -6,5 +6,9 @@ export const GET = async ({ url, locals }) => {
 		await locals.supabase.auth.exchangeCodeForSession(code);
 	}
 
-	throw redirect(303, '/');
+	const returnTo = url.searchParams.get('returnTo');
+	const safeReturnTo =
+		returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/';
+
+	throw redirect(303, safeReturnTo);
 };

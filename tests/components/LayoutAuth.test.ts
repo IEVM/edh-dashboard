@@ -15,7 +15,7 @@ describe('Layout auth state', () => {
 			}
 		});
 
-		expect(getByRole('button', { name: /sign in with google/i })).toBeTruthy();
+		expect(getByRole('button', { name: /sign in/i })).toBeTruthy();
 		expect(queryByText('Signed in')).toBeNull();
 		expect(queryByRole('link', { name: 'Settings' })).toBeNull();
 	});
