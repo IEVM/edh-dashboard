@@ -24,10 +24,7 @@ export function getPrisma() {
 		);
 	}
 
-	const disableSslVerify =
-		isVercel ||
-		connectionString.includes('pooler.supabase.com') ||
-		connectionString.includes('pgbouncer=true');
+	const disableSslVerify = true;
 	const pool = new Pool({
 		connectionString,
 		ssl: disableSslVerify ? { rejectUnauthorized: false } : undefined
