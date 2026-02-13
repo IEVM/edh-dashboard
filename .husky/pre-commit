@@ -1,5 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
 set -eu
 
@@ -69,21 +68,31 @@ if [ -n "$NPM_FALLBACK" ]; then
 fi
 
 if command -v bash >/dev/null 2>&1; then
-	bash -lc 'if [ -f ~/.bashrc ]; then . ~/.bashrc; fi; if [ -f ~/.bash_profile ]; then . ~/.bash_profile; fi; npm run pre-push-check'
-	exit $?
+	if bash -lc 'command -v npm >/dev/null 2>&1'; then
+		bash -lc 'if [ -f ~/.bashrc ]; then . ~/.bashrc; fi; if [ -f ~/.bash_profile ]; then . ~/.bash_profile; fi; npm run pre-push-check'
+		exit $?
+	fi
 fi
 
 if command -v zsh >/dev/null 2>&1; then
-	zsh -lc 'if [ -f ~/.zshrc ]; then . ~/.zshrc; fi; npm run pre-push-check'
-	exit $?
+	if zsh -lc 'command -v npm >/dev/null 2>&1'; then
+		zsh -lc 'if [ -f ~/.zshrc ]; then . ~/.zshrc; fi; npm run pre-push-check'
+		exit $?
+	fi
 fi
 
 if command -v fish >/dev/null 2>&1; then
-	fish -lc 'npm run pre-push-check'
-	exit $?
+	if fish -lc 'type -q npm'; then
+		fish -lc 'npm run pre-push-check'
+		exit $?
+	fi
 fi
 
 echo "npm not found in PATH. Ensure Node is available in git hooks."
 echo "PATH=$PATH"
 echo "node=$(command -v node || true)"
-exit 1
+if [ "${HUSKY_STRICT:-0}" = "1" ]; then
+	exit 1
+fi
+echo "Skipping pre-commit checks because npm is unavailable."
+exit 0
