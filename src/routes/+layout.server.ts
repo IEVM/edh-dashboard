@@ -1,10 +1,4 @@
 import type { LayoutServerLoad } from './$types';
-import {
-	POSTGRES_PRISMA_URL,
-	POSTGRES_URL,
-	POSTGRES_URL_NON_POOLING,
-	POSTGRES_URL_OVERRIDE
-} from '$env/static/private';
 import { env } from '$env/dynamic/private';
 import { getAuthUser } from '$lib/server/auth';
 
@@ -21,10 +15,9 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	const isVercel = env.VERCEL === '1' || env.VERCEL === 'true';
 	const hasDatabase =
 		isE2E ||
-		(!isVercel && !!POSTGRES_URL_OVERRIDE) ||
-		!!POSTGRES_URL_NON_POOLING ||
-		!!POSTGRES_PRISMA_URL ||
-		!!POSTGRES_URL;
+		!!env.POSTGRES_PRISMA_URL ||
+		!!env.POSTGRES_URL ||
+		(!isVercel && (!!env.POSTGRES_URL_OVERRIDE || !!env.POSTGRES_URL_NON_POOLING));
 
 	return {
 		isAuthenticated,
