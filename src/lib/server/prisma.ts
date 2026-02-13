@@ -31,10 +31,7 @@ export function getPrisma() {
 	}
 
 	const disableSslVerify = true;
-	const pool = new Pool({
-		connectionString,
-		ssl: disableSslVerify ? { rejectUnauthorized: false } : undefined
-	});
+	const pool = new Pool(buildPgConfig(connectionString, disableSslVerify));
 	const adapter = new PrismaPg(pool);
 	const client = new PrismaClient({
 		log: ['error'],
@@ -46,12 +43,7 @@ export function getPrisma() {
 	}
 
 	if (!globalForPrisma.prismaLogged) {
-		let host = 'unknown';
-		try {
-			host = new URL(connectionString).host || host;
-		} catch {
-			// ignore parse errors, keep host as unknown
-		}
+		const host = pool.options.host ?? 'unknown';
 		const source = isVercel
 			? 'POSTGRES_PRISMA_URL'
 			: env.POSTGRES_URL_OVERRIDE
@@ -70,4 +62,24 @@ export function getPrisma() {
 	}
 
 	return client;
+}
+
+function buildPgConfig(connectionString: string, disableSslVerify: boolean) {
+	try {
+		const url = new URL(connectionString);
+		const database = url.pathname.replace(/^\//, '');
+		return {
+			host: url.hostname,
+			port: url.port ? Number(url.port) : 5432,
+			user: decodeURIComponent(url.username),
+			password: decodeURIComponent(url.password),
+			database,
+			ssl: disableSslVerify ? { rejectUnauthorized: false } : undefined
+		};
+	} catch {
+		return {
+			connectionString,
+			ssl: disableSslVerify ? { rejectUnauthorized: false } : undefined
+		};
+	}
 }
