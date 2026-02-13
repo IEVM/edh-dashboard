@@ -1,13 +1,9 @@
 import type { PageServerLoad } from './$types';
+import type { UserProfile } from '$lib/server/google';
 import { getSessionData } from '$lib/server/session';
 
-/**
- * Loads the currently selected spreadsheet id from the server session.
- *
- * This is used by the Settings page to show which database is active (if any).
- */
 export const load: PageServerLoad = async ({ locals }) => {
-	const spreadsheetId = (await getSessionData(locals.sessionId, 'databaseSheetId')) ?? null;
+	const user = (await getSessionData<UserProfile>(locals.sessionId, 'userProfile')) ?? null;
 
-	return { spreadsheetId };
+	return { backend: 'db', user };
 };

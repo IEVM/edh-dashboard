@@ -3,7 +3,12 @@
 
 	import { Avatar } from '@skeletonlabs/skeleton';
 
-	export let data: { isAuthenticated: boolean; hasDatabase: boolean; currentPath: string };
+	export let data: {
+		isAuthenticated: boolean;
+		hasDatabase: boolean;
+		currentPath: string;
+		user: { name: string | null; email: string | null; picture: string | null } | null;
+	};
 	let mobileOpen = false;
 
 	const navItems = [
@@ -70,11 +75,19 @@
 			<div>
 				{#if data.isAuthenticated}
 					<div class="flex items-center gap-2">
-						<span class="text-xs text-surface-300 hidden sm:inline">Signed in</span>
+						<div class="hidden sm:flex flex-col items-end leading-tight">
+							<span class="text-xs text-surface-300">Signed in</span>
+							{#if data.user?.name || data.user?.email}
+								<span class="text-xs text-surface-100">
+									{data.user?.name ?? data.user?.email}
+								</span>
+							{/if}
+						</div>
 						<Avatar
 							class="rounded-full"
 							size="32"
-							src="https://www.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png"
+							src={data.user?.picture ??
+								'https://www.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png'}
 						/>
 					</div>
 				{:else}

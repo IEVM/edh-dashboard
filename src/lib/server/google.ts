@@ -2,14 +2,19 @@ import { google } from 'googleapis';
 import type { Credentials } from 'google-auth-library';
 import { env } from '$env/dynamic/private';
 import { kvDelete, kvGet, kvSet } from './kv';
+import { getSessionData, setSessionData } from './session';
+
+export type UserProfile = {
+	id: string;
+	email: string | null;
+	name: string | null;
+	picture: string | null;
+};
 
 const SCOPES = [
 	'openid',
 	'email',
-	'profile',
-	'https://www.googleapis.com/auth/drive.metadata.readonly',
-	'https://www.googleapis.com/auth/spreadsheets',
-	'https://www.googleapis.com/auth/drive.file'
+	'profile'
 ];
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
@@ -26,6 +31,18 @@ function createOAuthClient() {
 		env.GOOGLE_CLIENT_SECRET,
 		env.GOOGLE_REDIRECT_URI
 	);
+}
+
+async function fetchUserProfile(oauth2Client: ReturnType<typeof createOAuthClient>) {
+	const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+	const { data } = await oauth2.userinfo.get();
+
+	return {
+		id: data.id ?? '',
+		email: data.email ?? null,
+		name: data.name ?? null,
+		picture: data.picture ?? null
+	} satisfies UserProfile;
 }
 
 /**
@@ -57,7 +74,33 @@ export async function handleAuthCode(sessionId: string, code: string) {
 
 	await kvSet(tokensKey(sessionId), tokens, TOKEN_TTL_SECONDS);
 
+	oauth2Client.setCredentials(tokens);
+	const profile = await fetchUserProfile(oauth2Client);
+
+	if (profile.id) {
+		await setSessionData(sessionId, 'userProfile', profile);
+	}
+
 	return tokens;
+}
+
+export async function ensureUserProfile(sessionId: string): Promise<UserProfile | null> {
+	const existing = await getSessionData<UserProfile>(sessionId, 'userProfile');
+	if (existing?.id) return existing;
+
+	const tokens = await getTokens(sessionId);
+	if (!tokens) return null;
+
+	const oauth2Client = createOAuthClient();
+	oauth2Client.setCredentials(tokens);
+	const profile = await fetchUserProfile(oauth2Client);
+
+	if (profile.id) {
+		await setSessionData(sessionId, 'userProfile', profile);
+		return profile;
+	}
+
+	return null;
 }
 
 /**
@@ -84,36 +127,4 @@ export async function hasTokens(sessionId: string) {
 	return !!tokens;
 }
 
-/**
- * Returns a configured Google Sheets API client for the given session.
- *
- * @throws Error if no tokens are stored for this sessionId.
- */
-export async function getSheetsClient(sessionId: string) {
-	const tokens = await getTokens(sessionId);
-	if (!tokens) {
-		throw new Error('Not authenticated');
-	}
-
-	const oauth2Client = createOAuthClient();
-	oauth2Client.setCredentials(tokens);
-
-	return google.sheets({ version: 'v4', auth: oauth2Client });
-}
-
-/**
- * Returns a configured Google Drive API client for the given session.
- *
- * @throws Error if no tokens are stored for this sessionId.
- */
-export async function getDriveClient(sessionId: string) {
-	const tokens = await getTokens(sessionId);
-	if (!tokens) {
-		throw new Error('Not authenticated');
-	}
-
-	const oauth2Client = createOAuthClient();
-	oauth2Client.setCredentials(tokens);
-
-	return google.drive({ version: 'v3', auth: oauth2Client });
-}
+// Google Sheets / Drive clients removed (we now use Postgres).

@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
 
 test('deck detail page renders summary and stats in test mode', async ({ page }) => {
 	await page.request.post('/api/test/session', {
-		data: { authenticated: true, databaseId: 'e2e-sheet' }
+		data: { authenticated: true }
 	});
 
 	await page.goto('/decks');

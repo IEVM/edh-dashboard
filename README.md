@@ -3,7 +3,7 @@
 [![CI](https://github.com/IEVM/edh-dashboard/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/IEVM/edh-dashboard/actions/workflows/ci-cd.yml)
 
 Ein Dashboard, mit dem du deine **Magic: The Gathering – Commander (EDH)** Partien tracken kannst.  
-Die Daten werden in **deinem eigenen Google Spreadsheet** gespeichert (als “Datenbank”) und von dort aus wieder ausgelesen – **ohne** dass du selbst eine Datenbank hosten musst.
+Die Daten werden in **Postgres** gespeichert (Vercel Marketplace) – ohne dass du selbst eine Datenbank hosten musst.
 
 > Status: **Prototype / in Arbeit**
 
@@ -14,12 +14,10 @@ Live App: [edh-dashboard.vercel.app](https://edh-dashboard.vercel.app)
 ## Features
 
 - **Google Login (OAuth2)**: Anmelden mit deinem Google Account
-- **Spreadsheet als Datenbank**: Wähle ein bestehendes Google Sheet als Datenquelle
-- **Sheet-Generator**
-  - Erzeuge ein **leeres Spreadsheet** im richtigen Format
-  - Oder erzeuge ein **Test-Spreadsheet** mit ~**5000 zufällig generierten Testpartien** + meinen Commander Decks
+- **Postgres als Datenbank** (Vercel Marketplace)
+- **In-App Verwaltung**: Decks anlegen, Spiele loggen, Statistiken analysieren
 - **Deck-Thumbnails via Archidekt**  
-  Wenn bei den Decks im Spreadsheet ein **Archidekt-Link** hinterlegt ist, bekommt jedes Deck ein kleines Thumbnail.
+  Wenn bei den Decks ein **Archidekt-Link** hinterlegt ist, bekommt jedes Deck ein kleines Thumbnail.
 
 ---
 
@@ -29,7 +27,7 @@ Live App: [edh-dashboard.vercel.app](https://edh-dashboard.vercel.app)
 - **Tailwind CSS**
 - **Skeleton UI**
 - **Google OAuth2**
-- **Google Sheets** (als Persistence-Layer)
+- **Postgres** (Vercel Marketplace)
 - **Vercel** (Deployment)
 - **Upstash Redis** (Session und Token Store)
 - **Vitest** (Unit Tests)
@@ -45,7 +43,7 @@ Das Projekt besteht aus:
 
 - UI (Svelte + Skeleton + Tailwind)
 - Server-seitiger OAuth2-Flow
-- Google Sheets Integration (Lesen/Schreiben ins ausgewählte Sheet)
+- Postgres Integration (lesend/schreibend via DataManager)
 
 ---
 
@@ -53,7 +51,7 @@ Das Projekt besteht aus:
 
 - **Node.js / npm** (aktuelles LTS empfohlen)
 - Ein **Google Cloud Projekt** mit OAuth2 Credentials
-- Zugriff auf Google Sheets (dein Account)
+- **Vercel Postgres** (oder lokales Postgres)
 
 ---
 
@@ -76,12 +74,24 @@ cp .env.example .env
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_CALLBACK_URL` / `GOOGLE_REDIRECT_URI`
+- `POSTGRES_URL`
+- `DATA_BACKEND` (sollte `db` sein)
 
 ### Google OAuth2 (High-Level)
 
 - Erstelle in der **Google Cloud Console** OAuth2 Credentials (Web App)
 - Setze die **Authorized redirect URI** passend zu deinem Callback (z.B. dev: `http://localhost:5173/...`)
 - Trage Client ID / Secret / Callback in `.env` ein
+
+---
+
+### Postgres Schema
+
+Lege die Tabellen in deiner Postgres-DB an (Vercel Postgres → SQL Console):
+
+```sql
+\i db/schema.sql
+```
 
 ---
 
@@ -99,10 +109,9 @@ Danach im Browser öffnen (typisch SvelteKit dev URL):
 ## Nutzung
 
 1. Mit Google Account anmelden
-2. Ein Spreadsheet auswählen, das als Datenbank dient
-3. Alternativ: Ein **leeres Sheet im richtigen Format** erstellen lassen
-4. Oder: Ein **Test-Sheet** generieren lassen (ca. 5000 Matches + Deckliste)
-5. Partien tracken, Auswertungen im Dashboard anschauen
+2. Decks im **Decks**-Bereich anlegen
+3. Spiele im Deck-Detail hinzufügen
+4. Auswertungen im Dashboard anschauen
 
 ---
 
@@ -131,6 +140,7 @@ Umgebungsvariablen
 
 - Google OAuth Secrets liegen in den Vercel Umgebungen Preview und Production
 - Upstash Redis Env Vars liegen in den Vercel Umgebungen Preview und Production
+- Postgres Connection String liegt in den Vercel Umgebungen Preview und Production
 - GitHub Environments enthalten nur die Vercel Deploy Credentials und nur nicht sensible Build Time Variablen falls nötig
 
 Erforderliche GitHub Environment Secrets
@@ -148,6 +158,10 @@ Upstash Redis Environment Variablen in Vercel
 
 - UPSTASH_REDIS_REST_URL
 - UPSTASH_REDIS_REST_TOKEN
+
+Postgres Environment Variablen in Vercel
+
+- POSTGRES_URL
 
 ---
 

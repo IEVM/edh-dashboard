@@ -5,7 +5,6 @@ import { setSessionData } from '$lib/server/session';
 
 type Body = {
 	authenticated?: boolean;
-	databaseId?: string | null;
 };
 
 export const POST: RequestHandler = async ({ locals, request }) => {
@@ -28,12 +27,15 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			token_type: 'Bearer',
 			expiry_date: Date.now() + 60 * 60 * 1000
 		});
+		await setSessionData(locals.sessionId, 'userProfile', {
+			id: 'test-user',
+			email: 'test@example.com',
+			name: 'Test User',
+			picture: 'https://example.com/avatar.png'
+		});
 	} else if (body.authenticated === false) {
 		await clearTokens(locals.sessionId);
-	}
-
-	if (body.databaseId !== undefined) {
-		await setSessionData(locals.sessionId, 'databaseSheetId', body.databaseId);
+		await setSessionData(locals.sessionId, 'userProfile', null);
 	}
 
 	return new Response('ok');

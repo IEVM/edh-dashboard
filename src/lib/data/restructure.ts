@@ -7,6 +7,7 @@
  * - `stats` and `games` are optional, so a deck can exist without them.
  */
 export type Deck = {
+	id?: string;
 	deckName: string;
 	targetBracket: number | null;
 	summary: string | null;
@@ -43,6 +44,7 @@ export type Stats = {
  * depending on how far the processing pipeline has gone.
  */
 export type Games = Array<{
+	id?: string;
 	deck: string | Deck;
 	winner: number | null;
 	fun: number | null;
@@ -63,6 +65,11 @@ type Filter = Array<{
 	column: string;
 	match: string;
 }>;
+
+export type RowWithNumber = {
+	rowNumber: number;
+	row: any[];
+};
 
 /** Convert a spreadsheet cell value into a number or null if empty/invalid. */
 function toNumberOrNull(value: any): number | null {
@@ -87,87 +94,39 @@ function standardDeviation(values: number[]): number | null {
 }
 
 /**
- * Load one or more logical "databases" (sheets) from a Google Spreadsheet.
+ * Filter rows and preserve their original row numbers from the sheet.
  *
- * Each entry in `database` corresponds to a sheet name that this function
- * knows how to read. Currently supported:
- *   - "Games" → range 'Games!A1:H'
- *   - "Decks" → range 'Decks!A1:D'
- *
- * @param spreadsheetId ID of the Google Spreadsheet (per-user "database").
- * @param sheetsClient  Pre-configured Google Sheets API client.
- * @param database      List of logical databases (sheet names) to load.
- *                      Defaults to ["Games"].
- * @returns             An array of 2D arrays (`values`) in the same order as `database`.
- */
-export async function loadDatabase(
-	spreadsheetId: string,
-	sheetsClient: any,
-	database: string[] = ['Games']
-): Promise<any[][][]> {
-	const requests: Array<Promise<any>> = [];
-
-	for (const db of database) {
-		switch (db) {
-			case 'Games': {
-				const gamesReq = sheetsClient.spreadsheets.values.get({
-					spreadsheetId: spreadsheetId as string,
-					range: 'Games!A1:H'
-				});
-
-				requests.push(gamesReq);
-				break;
-			}
-			case 'Decks': {
-				const deckReq = sheetsClient.spreadsheets.values.get({
-					spreadsheetId: spreadsheetId as string,
-					range: 'Decks!A1:D'
-				});
-
-				requests.push(deckReq);
-				break;
-			}
-			default:
-				// Defensive log: this function was called with an unknown sheet name.
-				console.warn('A non existent sheet was requested.');
-		}
-	}
-
-	const responses = await Promise.all(requests);
-
-	// If a sheet is completely empty, default to an empty array.
-	return responses.map((res) => res.data.values ?? []);
-}
-
-/**
- * Filter a 2D spreadsheet data array by a list of column/match predicates.
- *
- * Notes:
- * - This function *does not* explicitly strip the header row; it filters the whole array.
- *   In practice, the header often gets removed because it doesn't match the filter values.
- * - Filters are applied sequentially (AND semantics).
- *
- * @param spreadsheetData 2D array of cell values, including a header row at index 0.
+ * @param spreadsheetData 2D array with header row at index 0.
  * @param filter          List of column filters to apply.
- * @returns               The filtered 2D array (may still include the header row in edge cases).
+ * @returns               Matching rows with 1-based sheet row numbers.
  */
-export function filterData(spreadsheetData: any, filter: Filter) {
+export function filterRowsWithNumbers(
+	spreadsheetData: any[][],
+	filter: Filter
+): RowWithNumber[] {
+	if (!Array.isArray(spreadsheetData) || spreadsheetData.length < 2) return [];
+
 	const headers = spreadsheetData[0].map((h: any) =>
 		String(h ?? '')
 			.toLowerCase()
 			.trim()
 	);
 
-	for (const f of filter) {
-		const idx = headers.indexOf(f.column);
+	const rows = spreadsheetData.slice(1);
 
-		// If the column is not found, this filter silently does nothing.
-		if (idx === -1) continue;
+	return rows
+		.map((row, idx) => ({ rowNumber: idx + 2, row }))
+		.filter(({ row }) => {
+			if (!Array.isArray(row)) return false;
 
-		spreadsheetData = spreadsheetData.filter((row: any) => row[idx] == f.match);
-	}
+			for (const f of filter) {
+				const colIdx = headers.indexOf(f.column);
+				if (colIdx === -1) continue;
+				if (row[colIdx] != f.match) return false;
+			}
 
-	return spreadsheetData;
+			return true;
+		});
 }
 
 /**
@@ -270,6 +229,60 @@ export function getGamesJson(spreadsheetData: any): Games {
 }
 
 /**
+ * Convert specific rows into Games while preserving row numbers.
+ *
+ * @param headerRow Header row from the sheet.
+ * @param rows      Rows with original sheet row numbers.
+ */
+export function getGamesJsonFromRows(headerRow: any[], rows: RowWithNumber[]): Games {
+	if (!Array.isArray(headerRow) || !rows.length) return [];
+
+	const headers = headerRow.map((h: any) =>
+		String(h ?? '')
+			.toLowerCase()
+			.trim()
+	);
+
+	const idxDeck = headers.indexOf('deck');
+	const idxWinner = headers.indexOf('winner');
+	const idxFun = headers.indexOf('fun');
+	const idxP2Fun = headers.indexOf('p2 fun');
+	const idxP3Fun = headers.indexOf('p3 fun');
+	const idxP4Fun = headers.indexOf('p4 fun');
+	const idxNotes = headers.indexOf('notes');
+	const idxEstBracket = headers.indexOf('est. pod bracket');
+
+	const toNumberOrNull = (value: any): number | null => {
+		if (value === undefined || value === null || value === '') return null;
+		const n = Number(value);
+		return Number.isNaN(n) ? null : n;
+	};
+
+	return rows
+		.filter(({ row }) => Array.isArray(row) && row.some((cell) => cell !== undefined && cell !== null && cell !== ''))
+		.map(({ row, rowNumber }) => {
+			const winner = idxWinner === -1 ? null : toNumberOrNull(row[idxWinner]);
+			const fun = idxFun === -1 ? null : toNumberOrNull(row[idxFun]);
+			const p2Fun = idxP2Fun === -1 ? null : toNumberOrNull(row[idxP2Fun]);
+			const p3Fun = idxP3Fun === -1 ? null : toNumberOrNull(row[idxP3Fun]);
+			const p4Fun = idxP4Fun === -1 ? null : toNumberOrNull(row[idxP4Fun]);
+			const estBracket = idxEstBracket === -1 ? null : toNumberOrNull(row[idxEstBracket]);
+
+			return {
+				id: `row-${rowNumber}`,
+				deck: idxDeck === -1 ? '' : (row[idxDeck] ?? ''),
+				winner,
+				fun,
+				p2Fun,
+				p3Fun,
+				p4Fun,
+				notes: idxNotes === -1 ? null : (row[idxNotes] ?? null),
+				estBracket
+			} as Games[number];
+		});
+}
+
+/**
  * Compute a Stats struct from a list of games.
  *
  * Assumes:
@@ -349,15 +362,10 @@ export function withStatsFromGames(deck: Deck): Deck {
  */
 export function withGames(deck: Deck, gamesSheetData: any): Deck {
 	const filter: Filter = [{ column: 'deck', match: deck.deckName }];
-
-	const filteredRowsMaybeIncludingHeader = filterData(gamesSheetData, filter);
-
-	// Reattach the original header row so getGamesJson can parse correctly.
 	const headerRow = gamesSheetData[0];
-	const filteredWithHeader = [headerRow, ...filteredRowsMaybeIncludingHeader];
+	const filteredRows = filterRowsWithNumbers(gamesSheetData, filter);
 
-	// Parse into typed Games and ensure each game references this Deck instance.
-	const games = getGamesJson(filteredWithHeader).map((g) => ({ ...g, deck }));
+	const games = getGamesJsonFromRows(headerRow, filteredRows).map((g) => ({ ...g, deck }));
 
 	return { ...deck, games };
 }

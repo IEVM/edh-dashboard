@@ -9,7 +9,8 @@ describe('Layout auth state', () => {
 				data: {
 					isAuthenticated: false,
 					hasDatabase: false,
-					currentPath: '/'
+					currentPath: '/',
+					user: null
 				}
 			}
 		});
@@ -25,7 +26,8 @@ describe('Layout auth state', () => {
 				data: {
 					isAuthenticated: false,
 					hasDatabase: false,
-					currentPath: '/settings'
+					currentPath: '/settings',
+					user: null
 				}
 			}
 		});
@@ -40,7 +42,8 @@ describe('Layout auth state', () => {
 				data: {
 					isAuthenticated: true,
 					hasDatabase: true,
-					currentPath: '/'
+					currentPath: '/',
+					user: { name: 'Test User', email: 'test@example.com', picture: null }
 				}
 			}
 		});

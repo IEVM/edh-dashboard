@@ -116,7 +116,7 @@
 		<div>
 			<h1 class="text-3xl font-semibold">EDH Dashboard</h1>
 			<p class="text-surface-300 text-sm">
-				Stats generated from the <strong>Games</strong> sheet in your selected database.
+				Stats generated from your recorded games.
 			</p>
 		</div>
 
@@ -141,7 +141,7 @@
 		<div
 			class="p-3 rounded-lg bg-surface-800 border border-surface-700/60 text-surface-200 text-sm"
 		>
-			No database selected. Go to <strong>Settings</strong> and choose a spreadsheet.
+			No database configured. Check your connection in <strong>Settings</strong>.
 		</div>
 	{/if}
 
@@ -176,9 +176,7 @@
 			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm">
 				<p class="text-xs text-surface-400 uppercase tracking-wide mb-1">Total games</p>
 				<p class="text-3xl font-semibold">{totalGames}</p>
-				<p class="text-xs text-surface-400 mt-1">
-					Number of games recorded in the <strong>Games</strong> sheet.
-				</p>
+				<p class="text-xs text-surface-400 mt-1">Number of games recorded.</p>
 			</div>
 
 			<div class="p-4 rounded-xl bg-surface-800 border border-surface-700/60 shadow-sm">

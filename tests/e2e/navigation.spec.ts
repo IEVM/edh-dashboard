@@ -38,7 +38,7 @@ test('sign-in button triggers mocked OAuth flow', async ({ page }) => {
 	await expect(page).toHaveURL('/');
 });
 
-test('nav shows items only when auth and database requirements are met', async ({ page }) => {
+test('nav shows items only when authenticated', async ({ page }) => {
 	await page.goto('/');
 
 	await expect(page.getByRole('link', { name: 'Settings' })).toHaveCount(0);
@@ -49,21 +49,13 @@ test('nav shows items only when auth and database requirements are met', async (
 	await page.goto('/');
 
 	await expect(page.getByRole('link', { name: 'Settings' })).toHaveCount(1);
-	await expect(page.getByRole('link', { name: 'Decks' })).toHaveCount(0);
-	await expect(page.getByRole('link', { name: 'Dashboard' })).toHaveCount(0);
-
-	await page.request.post('/api/test/session', {
-		data: { authenticated: true, databaseId: 'test-db-id' }
-	});
-	await page.goto('/');
-
 	await expect(page.getByRole('link', { name: 'Decks' })).toHaveCount(1);
 	await expect(page.getByRole('link', { name: 'Dashboard' })).toHaveCount(1);
 });
 
-test('decks page shows missing database state', async ({ page }) => {
+test('decks page shows auth error when logged out', async ({ page }) => {
 	await page.goto('/decks');
 
 	await expect(page.getByRole('heading', { name: 'Your Decks' })).toBeVisible();
-	await expect(page.getByText('No database selected.')).toBeVisible();
+	await expect(page.getByText('Not authenticated')).toBeVisible();
 });
