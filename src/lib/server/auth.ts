@@ -14,10 +14,10 @@ export async function getAuthUser(locals: App.Locals): Promise<AuthUser | null> 
 		if (testUser) return testUser;
 	}
 
-	const { session } = await locals.getSession();
-	if (!session?.user) return null;
+	const { data, error } = await locals.supabase.auth.getUser();
+	if (error || !data.user) return null;
 
-	const metadata = session.user.user_metadata ?? {};
+	const metadata = data.user.user_metadata ?? {};
 	const name =
 		typeof metadata.full_name === 'string'
 			? metadata.full_name
@@ -27,8 +27,8 @@ export async function getAuthUser(locals: App.Locals): Promise<AuthUser | null> 
 	const picture = typeof metadata.avatar_url === 'string' ? metadata.avatar_url : null;
 
 	return {
-		id: session.user.id,
-		email: session.user.email ?? null,
+		id: data.user.id,
+		email: data.user.email ?? null,
 		name,
 		picture
 	};

@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import prismaPkg from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import { env } from '$env/dynamic/private';
@@ -6,6 +7,7 @@ import { env } from '$env/dynamic/private';
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export function getPrisma() {
+	const { PrismaClient } = prismaPkg;
 	if (globalForPrisma.prisma) return globalForPrisma.prisma;
 
 	const connectionString = env.POSTGRES_PRISMA_URL ?? env.POSTGRES_URL ?? '';
