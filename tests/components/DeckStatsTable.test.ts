@@ -12,6 +12,7 @@ describe('DeckStatsTable', () => {
 
 	const rows: DeckStatsRow[] = [
 		{
+			id: 'deck-a',
 			name: 'Deck A',
 			games: 5,
 			wins: 3,
@@ -20,6 +21,7 @@ describe('DeckStatsTable', () => {
 			usagePercent: 10
 		},
 		{
+			id: 'deck-b',
 			name: 'Deck B',
 			games: 2,
 			wins: 2,
@@ -28,6 +30,7 @@ describe('DeckStatsTable', () => {
 			usagePercent: 20
 		},
 		{
+			id: 'deck-c',
 			name: 'Deck C',
 			games: 10,
 			wins: 1,

@@ -7,12 +7,14 @@
 	export let deckUrl: string | null = null;
 	export let summary: string | null = null;
 	export let deckName: string = '';
+	export let deckId: string | null = null;
 
 	let loading = false;
 	let fetchError: string | null = null;
 	let remoteName = '';
 	let image = '';
 	let lastLoadedKey: string | null = null;
+	let deckHref: string | null = null;
 	let link: ParsedDeckLink = {
 		url: null,
 		provider: null,
@@ -61,6 +63,8 @@
 			loadDeck(link);
 		}
 	}
+
+	$: deckHref = deckId ? `/dashboard/${encodeURIComponent(deckId)}` : null;
 </script>
 
 <div
@@ -71,7 +75,11 @@
 		<div class="flex flex-col w-full">
 			<span class="font-semibold">
 				{#if deckName}
-					<a href="/dashboard/{encodeURIComponent(deckName)}">{deckName}</a>
+					{#if deckHref}
+						<a href={deckHref}>{deckName}</a>
+					{:else}
+						{deckName}
+					{/if}
 				{:else if remoteName}
 					{remoteName}
 				{:else if link.label}
@@ -82,13 +90,21 @@
 			</span>
 
 			{#if image}
-				<a href="/dashboard/{encodeURIComponent(deckName || remoteName)}" class="block">
+				{#if deckHref}
+					<a href={deckHref} class="block">
+						<img
+							src={image}
+							alt={deckName || remoteName}
+							class="w-full aspect-[3/2] object-cover rounded-md border border-surface-700/60"
+						/>
+					</a>
+				{:else}
 					<img
 						src={image}
 						alt={deckName || remoteName}
 						class="w-full aspect-[3/2] object-cover rounded-md border border-surface-700/60"
 					/>
-				</a>
+				{/if}
 			{:else if link.error || fetchError || !link.url}
 				<div
 					class="w-full aspect-[3/2] rounded-md border border-surface-700/60 bg-surface-900/40 flex items-center justify-center text-xs text-center px-3 {link.error ||

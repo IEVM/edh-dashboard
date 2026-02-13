@@ -24,7 +24,6 @@ import {
 } from './base';
 
 export class DbDataManager extends DataManager {
-	spreadsheetId = 'db';
 	private user: AuthUser;
 	private useFixtures: boolean;
 
@@ -166,6 +165,10 @@ export class DbDataManager extends DataManager {
 
 	async getDashboardStats(): Promise<DashboardStats> {
 		if (this.useFixtures) {
+			const fixtureDecks = this.fixtureDecks();
+			const deckIdByName = new Map(
+				fixtureDecks.map((deck) => [deck.deckName, deck.id ?? deck.deckName])
+			);
 			const games = this.fixtureGames();
 			if (!games.length) {
 				return { stats: null, deckStats: [] };
@@ -211,6 +214,7 @@ export class DbDataManager extends DataManager {
 			const deckStats: DeckStatsRow[] = [];
 			for (const [name, { games: gCount, wins, losses, funSelf, funOthers }] of deckMap.entries()) {
 				deckStats.push({
+					id: deckIdByName.get(name) ?? name,
 					name,
 					games: gCount,
 					wins,
@@ -222,15 +226,15 @@ export class DbDataManager extends DataManager {
 				});
 			}
 
-		const totalGamesForUsage = deckStats.reduce((sum, d) => sum + d.games, 0);
-		for (const deck of deckStats) {
-			deck.usagePercent = totalGamesForUsage > 0 ? (deck.games / totalGamesForUsage) * 100 : 0;
+			const totalGamesForUsage = deckStats.reduce((sum, d) => sum + d.games, 0);
+			for (const deck of deckStats) {
+				deck.usagePercent = totalGamesForUsage > 0 ? (deck.games / totalGamesForUsage) * 100 : 0;
+			}
+
+			deckStats.sort((a, b) => b.games - a.games);
+
+			return { stats, deckStats };
 		}
-
-		deckStats.sort((a, b) => b.games - a.games);
-
-		return { stats, deckStats };
-	}
 
 	const prisma = this.db();
 	const statRows = (await prisma.$queryRaw`
@@ -296,6 +300,7 @@ export class DbDataManager extends DataManager {
 			group by d.id
 		)
 		select
+			base.id,
 			base.name,
 			base.games,
 			base.wins,
@@ -308,6 +313,7 @@ export class DbDataManager extends DataManager {
 	`) as Array<Record<string, unknown>>;
 
 		const deckStats: DeckStatsRow[] = deckRows.map((row) => ({
+			id: String(row.id ?? row.name ?? ''),
 			name: String(row.name ?? ''),
 			games: this.toInt(row.games),
 			wins: this.toInt(row.wins),
@@ -326,9 +332,9 @@ export class DbDataManager extends DataManager {
 		return { stats, deckStats };
 	}
 
-	async getDeckByName(name: string): Promise<Deck | null> {
+	async getDeckById(deckId: string): Promise<Deck | null> {
 		if (this.useFixtures) {
-			const deck = this.fixtureDecks().find((d) => d.deckName === name);
+			const deck = this.fixtureDecks().find((d) => d.id === deckId);
 			if (!deck) return null;
 			const deckWithGames = withGames(deck, E2E_GAMES_SHEET);
 			if (!deckWithGames.games || !deckWithGames.games.length) return deckWithGames;
@@ -337,7 +343,7 @@ export class DbDataManager extends DataManager {
 
 		const prisma = this.db();
 		const deckRecord = await prisma.deck.findFirst({
-			where: { userId: this.user.id, name },
+			where: { userId: this.user.id, id: deckId },
 			select: {
 				id: true,
 				name: true,

@@ -5,7 +5,6 @@
 	import type { Deck } from '$lib/data/restructure';
 
 	export let data: {
-		spreadsheetId: string | null;
 		deck: Deck | null;
 		error?: string;
 	};
@@ -174,10 +173,6 @@
 
 			editingDeck = false;
 			await invalidateAll();
-
-			if (deckOriginalName !== deckForm.deckName.trim()) {
-				await goto(`/dashboard/${encodeURIComponent(deckForm.deckName.trim())}`);
-			}
 		} finally {
 			savingDeck = false;
 		}
@@ -375,7 +370,7 @@
 	{:else if !deck}
 		<h1 class="text-3xl font-semibold">Missing Deck</h1>
 		<p class="text-sm text-surface-300 max-w-xl">
-			There seems to not be a deck with the specified name in your database.
+			There seems to not be a deck with the specified id in your database.
 		</p>
 	{:else}
 		<!-- Header -->
@@ -514,7 +509,12 @@
 				{/if}
 			</div>
 
-			<CommanderPreview deckUrl={deck.archidektLink} summary={deck.summary ?? ''} />
+			<CommanderPreview
+				deckId={deck.id ?? null}
+				deckName={deck.deckName}
+				deckUrl={deck.archidektLink}
+				summary={deck.summary ?? ''}
+			/>
 		</div>
 
 		<!-- Quick stats -->

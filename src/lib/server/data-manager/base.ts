@@ -1,6 +1,7 @@
 import type { Deck, Games, Stats } from '$lib/data/restructure';
 
 export type DeckStatsRow = {
+	id: string;
 	name: string;
 	games: number;
 	wins: number;
@@ -53,10 +54,9 @@ export class DataManagerError extends Error {
 }
 
 export abstract class DataManager {
-	abstract spreadsheetId: string;
 	abstract getDecks(): Promise<Deck[]>;
 	abstract getGames(): Promise<Games>;
-	abstract getDeckByName(name: string): Promise<Deck | null>;
+	abstract getDeckById(deckId: string): Promise<Deck | null>;
 	abstract getDashboardStats(): Promise<DashboardStats>;
 	abstract appendDeck(input: DeckInput): Promise<void>;
 	abstract appendGame(input: GameInput): Promise<void>;

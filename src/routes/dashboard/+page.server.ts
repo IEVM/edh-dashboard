@@ -10,7 +10,6 @@ import {
 export type DeckStats = DeckStatsRow;
 
 type DashboardData = {
-	spreadsheetId: string | null;
 	error?: string;
 	stats: Stats | null;
 	deckStats: DeckStats[];
@@ -30,8 +29,6 @@ export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> =
 
 		if (!stats) {
 			return {
-				spreadsheetId: manager.spreadsheetId,
-				error: 'No game data found yet.',
 				stats: null,
 				deckStats: [],
 				targetWinRate: 0
@@ -41,7 +38,6 @@ export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> =
 		const targetWinRate = stats.expectedWinrate * 100;
 
 		return {
-			spreadsheetId: manager.spreadsheetId,
 			stats,
 			deckStats,
 			targetWinRate
@@ -49,7 +45,6 @@ export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> =
 	} catch (err) {
 		if (err instanceof DataManagerError) {
 			return {
-				spreadsheetId: null,
 				error: err.message,
 				stats: null,
 				deckStats: [],
@@ -58,7 +53,6 @@ export const load: PageServerLoad = async ({ locals }): Promise<DashboardData> =
 		}
 
 		return {
-			spreadsheetId: null,
 			error: 'Unexpected error while loading dashboard.',
 			stats: null,
 			deckStats: [],

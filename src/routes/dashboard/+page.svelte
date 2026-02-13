@@ -6,14 +6,12 @@
 	import type { DeckStats } from './+page.server';
 
 	export let data: {
-		spreadsheetId: string | null;
 		error?: string;
 		stats: Stats | null;
 		deckStats: DeckStats[];
 		targetWinRate: number;
 	};
 
-	const spreadsheetId = data.spreadsheetId;
 	let errorMsg: string | null = data.error ?? null;
 	let stats: Stats | null = data.stats;
 	let deckStats: DeckStats[] = data.deckStats;
@@ -59,8 +57,8 @@
 		return value.toFixed(1);
 	}
 
-	function deckHref(name: string) {
-		return `/dashboard/${encodeURIComponent(name)}`;
+	function deckHref(id: string) {
+		return `/dashboard/${encodeURIComponent(id)}`;
 	}
 
 	const overviewColumns: DeckStatsColumn[] = [
@@ -125,7 +123,6 @@
 			class="btn variant-outlined-primary-500 text-sm self-start sm:self-auto"
 			type="button"
 			on:click={() => location.reload()}
-			disabled={!spreadsheetId}
 		>
 			Refresh
 		</button>
@@ -137,11 +134,20 @@
 		</div>
 	{/if}
 
-	{#if !errorMsg && !spreadsheetId}
-		<div
-			class="p-3 rounded-lg bg-surface-800 border border-surface-700/60 text-surface-200 text-sm"
-		>
-			No database configured. Check your connection in <strong>Settings</strong>.
+	{#if !errorMsg && !deckStats.length}
+		<div class="rounded-xl border border-surface-700/60 bg-surface-800 p-4 text-sm text-surface-300">
+			<p class="text-surface-200 font-semibold">No games yet.</p>
+			<p class="mt-1">
+				Add your first deck and log a game to see dashboard stats.
+			</p>
+			<div class="mt-3">
+				<a
+					href="/decks"
+					class="px-3 py-1 rounded-md bg-primary-500/20 text-primary-200 text-sm border border-primary-500/40 inline-block"
+				>
+					Go to Decks
+				</a>
+			</div>
 		</div>
 	{/if}
 
@@ -207,7 +213,7 @@
 					<p class="text-xl font-semibold">
 						<a
 							class="text-primary-300 hover:text-primary-200 underline underline-offset-2"
-							href={deckHref(bestDeck.name)}
+							href={deckHref(bestDeck.id)}
 						>
 							{bestDeck.name}
 						</a>
@@ -226,7 +232,7 @@
 					<p class="text-xl font-semibold">
 						<a
 							class="text-primary-300 hover:text-primary-200 underline underline-offset-2"
-							href={deckHref(bestFunSelf.name)}
+							href={deckHref(bestFunSelf.id)}
 						>
 							{bestFunSelf.name}
 						</a>
@@ -249,7 +255,7 @@
 					<p class="text-xl font-semibold">
 						<a
 							class="text-primary-300 hover:text-primary-200 underline underline-offset-2"
-							href={deckHref(bestFunOthers.name)}
+							href={deckHref(bestFunOthers.id)}
 						>
 							{bestFunOthers.name}
 						</a>

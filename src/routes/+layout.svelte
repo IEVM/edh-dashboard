@@ -16,7 +16,6 @@
 		{ href: '/decks', label: 'Decks', requiresAuth: true, requiresDb: true },
 		{ href: '/settings', label: 'Settings', requiresAuth: true },
 		{ href: '/dashboard', label: 'Dashboard', requiresAuth: true, requiresDb: true },
-		{ href: '/guide', label: 'Guide' }
 	];
 
 	const authRequiredPrefixes = ['/settings', '/decks', '/dashboard'];

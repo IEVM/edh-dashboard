@@ -1,4 +1,5 @@
 export type DeckStatsRow = {
+	id: string;
 	name: string;
 	games: number;
 	wins: number;

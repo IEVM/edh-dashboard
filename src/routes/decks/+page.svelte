@@ -156,6 +156,7 @@
 		>
 			{#each decks as deck}
 				<CommanderPreview
+					deckId={deck.id ?? null}
 					deckName={deck.deckName}
 					summary={deck.summary}
 					deckUrl={deck.archidektLink}
@@ -163,6 +164,18 @@
 			{/each}
 		</div>
 	{:else}
-		<p class="text-sm text-surface-400">No decks found in your database yet.</p>
+		<div class="rounded-xl border border-surface-700/60 bg-surface-800 p-4 text-sm text-surface-300">
+			<p class="text-surface-200 font-semibold">No decks yet.</p>
+			<p class="mt-1">Add your first deck to start tracking games and stats.</p>
+			<div class="mt-3">
+				<button
+					class="px-3 py-1 rounded-md bg-primary-500/20 text-primary-200 text-sm border border-primary-500/40"
+					type="button"
+					on:click={() => (addingDeck = true)}
+				>
+					Add your first deck
+				</button>
+			</div>
+		</div>
 	{/if}
 </div>

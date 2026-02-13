@@ -13,8 +13,8 @@
 	let sortKey: DeckStatsColumn['key'] | null = initialSortKey;
 	let sortDir: 'asc' | 'desc' = initialSortDir;
 
-	function deckHref(name: string) {
-		return `${linkBase}/${encodeURIComponent(name)}`;
+	function deckHref(row: DeckStatsRow) {
+		return `${linkBase}/${encodeURIComponent(row.id)}`;
 	}
 
 	function rowColor(index: number) {
@@ -120,7 +120,7 @@
 							{/if}
 							<a
 								class="truncate block max-w-xs text-primary-300 hover:text-primary-200 underline underline-offset-2"
-								href={deckHref(row.name)}
+								href={deckHref(row)}
 							>
 								{row.name}
 							</a>

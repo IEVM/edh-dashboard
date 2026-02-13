@@ -17,13 +17,6 @@ export const load: PageServerLoad = async ({ locals }): Promise<DecksPageData> =
 		const manager = await getDataManager(locals);
 		const decks = await manager.getDecks();
 
-		if (!decks.length) {
-			return {
-				error: 'No deck data found yet.',
-				decks: []
-			};
-		}
-
 		return { decks };
 	} catch (err) {
 		if (err instanceof DataManagerError) {
