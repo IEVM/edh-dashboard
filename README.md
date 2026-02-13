@@ -75,7 +75,8 @@ cp .env.example .env
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_CALLBACK_URL` / `GOOGLE_REDIRECT_URI`
 - `POSTGRES_URL`
-- `DATA_BACKEND` (sollte `db` sein)
+- `POSTGRES_PRISMA_URL` (Prisma; Connection String)
+- `POSTGRES_URL_NON_POOLING` (Prisma migrations)
 
 ### Google OAuth2 (High-Level)
 
@@ -85,12 +86,12 @@ cp .env.example .env
 
 ---
 
-### Postgres Schema
+### Prisma Migrations
 
-Lege die Tabellen in deiner Postgres-DB an (Vercel Postgres → SQL Console):
+Wir nutzen Prisma als Quelle der Wahrheit. Initialisiere die DB so:
 
-```sql
-\i db/schema.sql
+```bash
+npx prisma migrate dev
 ```
 
 ---

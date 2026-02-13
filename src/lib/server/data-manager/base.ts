@@ -1,4 +1,20 @@
-import type { Deck, Games } from '$lib/data/restructure';
+import type { Deck, Games, Stats } from '$lib/data/restructure';
+
+export type DeckStatsRow = {
+	name: string;
+	games: number;
+	wins: number;
+	losses: number;
+	winRate: number;
+	usagePercent: number;
+	avgFunSelf: number | null;
+	avgFunOthers: number | null;
+};
+
+export type DashboardStats = {
+	stats: Stats | null;
+	deckStats: DeckStatsRow[];
+};
 
 export type DeckInput = {
 	deckName: string;
@@ -41,6 +57,7 @@ export abstract class DataManager {
 	abstract getDecks(): Promise<Deck[]>;
 	abstract getGames(): Promise<Games>;
 	abstract getDeckByName(name: string): Promise<Deck | null>;
+	abstract getDashboardStats(): Promise<DashboardStats>;
 	abstract appendDeck(input: DeckInput): Promise<void>;
 	abstract appendGame(input: GameInput): Promise<void>;
 	abstract updateDeck(input: DeckUpdateInput): Promise<void>;

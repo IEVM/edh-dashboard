@@ -3,38 +3,26 @@ import { randomUUID } from 'crypto';
 import {
 	getDeckJson,
 	getGamesJsonFromRows,
+	statsFromGames,
 	withGames,
-	withStatsFromGames,
 	type Deck,
-	type Games
+	type Games,
+	type Stats
 } from '$lib/data/restructure';
 import { E2E_DECKS_SHEET, E2E_GAMES_SHEET } from '$lib/server/e2e-fixtures';
 import { ensureUserProfile, type UserProfile } from '$lib/server/google';
+import { prisma } from '$lib/server/prisma';
 import { getSessionData } from '$lib/server/session';
 import {
 	DataManager,
 	DataManagerError,
+	type DashboardStats,
 	type DeckInput,
+	type DeckStatsRow,
 	type DeckUpdateInput,
 	type GameInput,
 	type GameUpdateInput
 } from './base';
-
-type SqlClient = typeof import('@vercel/postgres').sql;
-let sqlClient: SqlClient | null = null;
-
-const getSql = async () => {
-	if (!env.POSTGRES_URL) {
-		throw new DataManagerError('Database not configured', 500);
-	}
-
-	if (!sqlClient) {
-		const mod = await import('@vercel/postgres');
-		sqlClient = mod.sql;
-	}
-
-	return sqlClient;
-};
 
 export class DbDataManager extends DataManager {
 	spreadsheetId = 'db';
@@ -60,16 +48,24 @@ export class DbDataManager extends DataManager {
 		const manager = new DbDataManager(user, useFixtures);
 
 		if (!useFixtures) {
-			const sql = await getSql();
-			await sql`
-				insert into users (id, email, name, avatar_url)
-				values (${user.id}, ${user.email}, ${user.name}, ${user.picture})
-				on conflict (id) do update
-				set email = excluded.email,
-					name = excluded.name,
-					avatar_url = excluded.avatar_url,
-					updated_at = now()
-			`;
+			if (!env.POSTGRES_PRISMA_URL && !env.POSTGRES_URL) {
+				throw new DataManagerError('Database not configured', 500);
+			}
+
+			await prisma.user.upsert({
+				where: { id: user.id },
+				create: {
+					id: user.id,
+					email: user.email ?? null,
+					name: user.name ?? null,
+					avatarUrl: user.picture ?? null
+				},
+				update: {
+					email: user.email ?? null,
+					name: user.name ?? null,
+					avatarUrl: user.picture ?? null
+				}
+			});
 		}
 
 		return manager;
@@ -93,25 +89,56 @@ export class DbDataManager extends DataManager {
 		return getGamesJsonFromRows(headerRow, rows);
 	}
 
+	private toNumber(value: unknown): number | null {
+		if (value === null || value === undefined) return null;
+		const n = Number(value);
+		return Number.isNaN(n) ? null : n;
+	}
+
+	private toInt(value: unknown): number {
+		const n = Number(value ?? 0);
+		return Number.isNaN(n) ? 0 : n;
+	}
+
+	private statsFromRow(row: Record<string, unknown>): Stats | null {
+		const totalGames = this.toInt(row.total_games);
+		if (!totalGames) return null;
+
+		const wins = this.toInt(row.wins);
+		const losses = this.toInt(row.losses);
+		const expectedWins = this.toNumber(row.expected_wins) ?? 0;
+
+		return {
+			totalGames,
+			wins,
+			losses,
+			winRate: totalGames ? wins / totalGames : 0,
+			expectedWinrate: totalGames ? expectedWins / totalGames : 0,
+			avgFunSelf: this.toNumber(row.avg_fun_self),
+			stdFunSelf: this.toNumber(row.std_fun_self),
+			avgFunOthers: this.toNumber(row.avg_fun_others),
+			avgFunWins: this.toNumber(row.avg_fun_wins),
+			avgFunLosses: this.toNumber(row.avg_fun_losses),
+			avgEstBracket: this.toNumber(row.avg_est_bracket)
+		};
+	}
+
 	async getDecks(): Promise<Deck[]> {
 		if (this.useFixtures) {
 			return this.fixtureDecks();
 		}
 
-		const sql = await getSql();
-		const { rows } = await sql`
-			select id, name, target_bracket, summary, archidekt_link
-			from decks
-			where user_id = ${this.user.id}
-			order by name asc
-		`;
+		const decks = await prisma.deck.findMany({
+			where: { userId: this.user.id },
+			orderBy: { name: 'asc' }
+		});
 
-		return rows.map((row) => ({
-			id: row.id,
-			deckName: row.name,
-			targetBracket: row.target_bracket ?? null,
-			summary: row.summary ?? null,
-			archidektLink: row.archidekt_link ?? null
+		return decks.map((deck) => ({
+			id: deck.id,
+			deckName: deck.name,
+			targetBracket: deck.targetBracket ?? null,
+			summary: deck.summary ?? null,
+			archidektLink: deck.archidektLink ?? null
 		}));
 	}
 
@@ -120,168 +147,336 @@ export class DbDataManager extends DataManager {
 			return this.fixtureGames();
 		}
 
-		const sql = await getSql();
-		const { rows } = await sql`
-			select g.id,
-				g.winner,
-				g.fun,
-				g.p2_fun,
-				g.p3_fun,
-				g.p4_fun,
-				g.notes,
-				g.est_bracket,
-				d.name as deck_name
-			from games g
-			join decks d on d.id = g.deck_id
-			where g.user_id = ${this.user.id}
-			order by g.created_at asc
-		`;
+		const games = await prisma.game.findMany({
+			where: { userId: this.user.id },
+			orderBy: { createdAt: 'asc' },
+			include: { deck: { select: { name: true } } }
+		});
 
-		return rows.map((row) => ({
-			id: row.id,
-			deck: row.deck_name ?? '',
-			winner: row.winner ?? null,
-			fun: row.fun ?? null,
-			p2Fun: row.p2_fun ?? null,
-			p3Fun: row.p3_fun ?? null,
-			p4Fun: row.p4_fun ?? null,
-			notes: row.notes ?? null,
-			estBracket: row.est_bracket ?? null
+		return games.map((game) => ({
+			id: game.id,
+			deck: game.deck?.name ?? '',
+			winner: game.winner ?? null,
+			fun: game.fun ?? null,
+			p2Fun: game.p2Fun ?? null,
+			p3Fun: game.p3Fun ?? null,
+			p4Fun: game.p4Fun ?? null,
+			notes: game.notes ?? null,
+			estBracket: game.estBracket ?? null
 		}));
+	}
+
+	async getDashboardStats(): Promise<DashboardStats> {
+		if (this.useFixtures) {
+			const games = this.fixtureGames();
+			if (!games.length) {
+				return { stats: null, deckStats: [] };
+			}
+
+			const stats = statsFromGames(games);
+
+			const average = (values: number[]) => {
+				if (!values.length) return null;
+				const sum = values.reduce((acc, v) => acc + v, 0);
+				return sum / values.length;
+			};
+
+			const deckMap = new Map<
+				string,
+				{ games: number; wins: number; losses: number; funSelf: number[]; funOthers: number[] }
+			>();
+
+			for (const g of games) {
+				const deckName = typeof g.deck === 'string' ? g.deck.trim() : g.deck.deckName.trim();
+				if (!deckName) continue;
+
+				const current = deckMap.get(deckName) ?? {
+					games: 0,
+					wins: 0,
+					losses: 0,
+					funSelf: [],
+					funOthers: []
+				};
+				current.games += 1;
+
+				if (g.winner === 1) current.wins += 1;
+				else if (g.winner && g.winner >= 2 && g.winner <= 4) current.losses += 1;
+
+				if (g.fun !== null) current.funSelf.push(g.fun);
+				if (g.p2Fun !== null) current.funOthers.push(g.p2Fun);
+				if (g.p3Fun !== null) current.funOthers.push(g.p3Fun);
+				if (g.p4Fun !== null) current.funOthers.push(g.p4Fun);
+
+				deckMap.set(deckName, current);
+			}
+
+			const deckStats: DeckStatsRow[] = [];
+			for (const [name, { games: gCount, wins, losses, funSelf, funOthers }] of deckMap.entries()) {
+				deckStats.push({
+					name,
+					games: gCount,
+					wins,
+					losses,
+					winRate: gCount > 0 ? (wins / gCount) * 100 : 0,
+					usagePercent: 0,
+					avgFunSelf: average(funSelf),
+					avgFunOthers: average(funOthers)
+				});
+			}
+
+		const totalGamesForUsage = deckStats.reduce((sum, d) => sum + d.games, 0);
+		for (const deck of deckStats) {
+			deck.usagePercent = totalGamesForUsage > 0 ? (deck.games / totalGamesForUsage) * 100 : 0;
+		}
+
+		deckStats.sort((a, b) => b.games - a.games);
+
+		return { stats, deckStats };
+	}
+
+	const statRows = (await prisma.$queryRaw`
+		select
+			count(*)::int as total_games,
+			count(*) filter (where winner = 1)::int as wins,
+			count(*) filter (where winner between 2 and 4)::int as losses,
+			avg(fun)::float as avg_fun_self,
+			stddev_samp(fun)::float as std_fun_self,
+			avg(case when winner = 1 then fun end)::float as avg_fun_wins,
+			avg(case when winner between 2 and 4 then fun end)::float as avg_fun_losses,
+			avg(est_bracket)::float as avg_est_bracket,
+			sum(
+				1.0
+				/
+				(
+					1
+					+ (case when p2_fun is not null then 1 else 0 end)
+					+ (case when p3_fun is not null then 1 else 0 end)
+					+ (case when p4_fun is not null then 1 else 0 end)
+				)
+			)::float as expected_wins,
+			(
+				select avg(val)::float
+				from (
+					select unnest(array[p2_fun, p3_fun, p4_fun]) as val
+					from games
+					where user_id = ${this.user.id}
+				) vals
+				where val is not null
+			) as avg_fun_others
+		from games
+		where user_id = ${this.user.id}
+	`) as Array<Record<string, unknown>>;
+
+	const stats = statRows.length ? this.statsFromRow(statRows[0]) : null;
+	if (!stats) {
+		return { stats: null, deckStats: [] };
+	}
+
+	const deckRows = (await prisma.$queryRaw`
+		with base as (
+			select
+				d.id,
+				d.name,
+				count(g.id)::int as games,
+				count(*) filter (where g.winner = 1)::int as wins,
+				count(*) filter (where g.winner between 2 and 4)::int as losses,
+				avg(g.fun)::float as avg_fun_self
+			from decks d
+			join games g on g.deck_id = d.id and g.user_id = ${this.user.id}
+			where d.user_id = ${this.user.id}
+			group by d.id, d.name
+		),
+		others as (
+			select
+				d.id,
+				avg(val)::float as avg_fun_others
+			from decks d
+			join games g on g.deck_id = d.id and g.user_id = ${this.user.id}
+			left join lateral unnest(array[g.p2_fun, g.p3_fun, g.p4_fun]) as u(val) on true
+			where d.user_id = ${this.user.id}
+			group by d.id
+		)
+		select
+			base.name,
+			base.games,
+			base.wins,
+			base.losses,
+			base.avg_fun_self,
+			others.avg_fun_others
+		from base
+		left join others on others.id = base.id
+		order by base.games desc, base.name asc
+	`) as Array<Record<string, unknown>>;
+
+		const deckStats: DeckStatsRow[] = deckRows.map((row) => ({
+			name: String(row.name ?? ''),
+			games: this.toInt(row.games),
+			wins: this.toInt(row.wins),
+			losses: this.toInt(row.losses),
+			winRate: this.toInt(row.games) > 0 ? (this.toInt(row.wins) / this.toInt(row.games)) * 100 : 0,
+			usagePercent: 0,
+			avgFunSelf: this.toNumber(row.avg_fun_self),
+			avgFunOthers: this.toNumber(row.avg_fun_others)
+		}));
+
+		const totalGamesForUsage = deckStats.reduce((sum, d) => sum + d.games, 0);
+		for (const deck of deckStats) {
+			deck.usagePercent = totalGamesForUsage > 0 ? (deck.games / totalGamesForUsage) * 100 : 0;
+		}
+
+		return { stats, deckStats };
 	}
 
 	async getDeckByName(name: string): Promise<Deck | null> {
 		if (this.useFixtures) {
 			const deck = this.fixtureDecks().find((d) => d.deckName === name);
 			if (!deck) return null;
-			return withStatsFromGames(withGames(deck, E2E_GAMES_SHEET));
+			const deckWithGames = withGames(deck, E2E_GAMES_SHEET);
+			if (!deckWithGames.games || !deckWithGames.games.length) return deckWithGames;
+			return { ...deckWithGames, stats: statsFromGames(deckWithGames.games) };
 		}
 
-		const sql = await getSql();
-		const { rows: deckRows } = await sql`
-			select id, name, target_bracket, summary, archidekt_link
-			from decks
-			where user_id = ${this.user.id}
-				and name = ${name}
-			limit 1
-		`;
+		const deckRecord = await prisma.deck.findFirst({
+			where: { userId: this.user.id, name },
+			select: {
+				id: true,
+				name: true,
+				targetBracket: true,
+				summary: true,
+				archidektLink: true
+			}
+		});
 
-		if (!deckRows.length) return null;
+		if (!deckRecord) return null;
 
 		const deck: Deck = {
-			id: deckRows[0].id,
-			deckName: deckRows[0].name,
-			targetBracket: deckRows[0].target_bracket ?? null,
-			summary: deckRows[0].summary ?? null,
-			archidektLink: deckRows[0].archidekt_link ?? null
+			id: deckRecord.id,
+			deckName: deckRecord.name,
+			targetBracket: deckRecord.targetBracket ?? null,
+			summary: deckRecord.summary ?? null,
+			archidektLink: deckRecord.archidektLink ?? null
 		};
 
-		const { rows: gameRows } = await sql`
-			select id,
-				winner,
-				fun,
-				p2_fun,
-				p3_fun,
-				p4_fun,
-				notes,
-				est_bracket
-			from games
-			where user_id = ${this.user.id}
-				and deck_id = ${deck.id}
-			order by created_at asc
-		`;
+		const gameRecords = await prisma.game.findMany({
+			where: { userId: this.user.id, deckId: deckRecord.id },
+			orderBy: { createdAt: 'asc' }
+		});
 
-		const games: Games = gameRows.map((row) => ({
+		const games: Games = gameRecords.map((row) => ({
 			id: row.id,
 			deck,
 			winner: row.winner ?? null,
 			fun: row.fun ?? null,
-			p2Fun: row.p2_fun ?? null,
-			p3Fun: row.p3_fun ?? null,
-			p4Fun: row.p4_fun ?? null,
+			p2Fun: row.p2Fun ?? null,
+			p3Fun: row.p3Fun ?? null,
+			p4Fun: row.p4Fun ?? null,
 			notes: row.notes ?? null,
-			estBracket: row.est_bracket ?? null
+			estBracket: row.estBracket ?? null
 		}));
 
-		return withStatsFromGames({ ...deck, games });
+		const stats = await this.getStatsForDeck(deckRecord.id);
+		return stats ? { ...deck, games, stats } : { ...deck, games };
+	}
+
+	private async getStatsForDeck(deckId: string): Promise<Stats | null> {
+		if (this.useFixtures) return null;
+
+		const rows = (await prisma.$queryRaw`
+			select
+				count(*)::int as total_games,
+				count(*) filter (where winner = 1)::int as wins,
+				count(*) filter (where winner between 2 and 4)::int as losses,
+				avg(fun)::float as avg_fun_self,
+				stddev_samp(fun)::float as std_fun_self,
+				avg(case when winner = 1 then fun end)::float as avg_fun_wins,
+				avg(case when winner between 2 and 4 then fun end)::float as avg_fun_losses,
+				avg(est_bracket)::float as avg_est_bracket,
+				sum(
+					1.0
+					/
+					(
+						1
+						+ (case when p2_fun is not null then 1 else 0 end)
+						+ (case when p3_fun is not null then 1 else 0 end)
+						+ (case when p4_fun is not null then 1 else 0 end)
+					)
+				)::float as expected_wins,
+				(
+					select avg(val)::float
+					from (
+						select unnest(array[p2_fun, p3_fun, p4_fun]) as val
+						from games
+						where user_id = ${this.user.id}
+							and deck_id = ${deckId}
+					) vals
+					where val is not null
+				) as avg_fun_others
+			from games
+			where user_id = ${this.user.id}
+				and deck_id = ${deckId}
+		`) as Array<Record<string, unknown>>;
+
+		return rows.length ? this.statsFromRow(rows[0]) : null;
 	}
 
 	async appendDeck(input: DeckInput): Promise<void> {
 		if (this.useFixtures) return;
 
-		const sql = await getSql();
-		await sql`
-			insert into decks (id, user_id, name, target_bracket, summary, archidekt_link)
-			values (
-				${randomUUID()},
-				${this.user.id},
-				${input.deckName},
-				${input.targetBracket},
-				${input.summary},
-				${input.archidektLink}
-			)
-		`;
+		await prisma.deck.create({
+			data: {
+				id: randomUUID(),
+				userId: this.user.id,
+				name: input.deckName,
+				targetBracket: input.targetBracket,
+				summary: input.summary,
+				archidektLink: input.archidektLink
+			}
+		});
 	}
 
 	async appendGame(input: GameInput): Promise<void> {
 		if (this.useFixtures) return;
 
-		const sql = await getSql();
-		const { rows } = await sql`
-			select id from decks
-			where user_id = ${this.user.id}
-				and name = ${input.deckName}
-			limit 1
-		`;
+		const deck = await prisma.deck.findFirst({
+			where: { userId: this.user.id, name: input.deckName },
+			select: { id: true }
+		});
 
-		if (!rows.length) {
+		if (!deck) {
 			throw new DataManagerError('Deck not found', 404);
 		}
 
-		await sql`
-			insert into games (
-				id,
-				user_id,
-				deck_id,
-				winner,
-				fun,
-				p2_fun,
-				p3_fun,
-				p4_fun,
-				notes,
-				est_bracket
-			)
-			values (
-				${randomUUID()},
-				${this.user.id},
-				${rows[0].id},
-				${input.winner},
-				${input.fun},
-				${input.p2Fun},
-				${input.p3Fun},
-				${input.p4Fun},
-				${input.notes},
-				${input.estBracket}
-			)
-		`;
+		await prisma.game.create({
+			data: {
+				id: randomUUID(),
+				userId: this.user.id,
+				deckId: deck.id,
+				winner: input.winner,
+				fun: input.fun,
+				p2Fun: input.p2Fun,
+				p3Fun: input.p3Fun,
+				p4Fun: input.p4Fun,
+				notes: input.notes,
+				estBracket: input.estBracket
+			}
+		});
 	}
 
 	async updateDeck(input: DeckUpdateInput): Promise<void> {
 		if (this.useFixtures) return;
 
-		const sql = await getSql();
-		const result = await sql`
-			update decks
-			set name = ${input.deckName},
-				target_bracket = ${input.targetBracket},
-				summary = ${input.summary},
-				archidekt_link = ${input.archidektLink},
-				updated_at = now()
-			where user_id = ${this.user.id}
-				and id = ${input.deckId}
-		`;
+		const result = await prisma.deck.updateMany({
+			where: { userId: this.user.id, id: input.deckId },
+			data: {
+				name: input.deckName,
+				targetBracket: input.targetBracket,
+				summary: input.summary,
+				archidektLink: input.archidektLink,
+				updatedAt: new Date()
+			}
+		});
 
-		if (!result.rowCount) {
+		if (!result.count) {
 			throw new DataManagerError('Deck not found', 404);
 		}
 	}
@@ -289,21 +484,20 @@ export class DbDataManager extends DataManager {
 	async updateGame(input: GameUpdateInput): Promise<void> {
 		if (this.useFixtures) return;
 
-		const sql = await getSql();
-		const result = await sql`
-			update games
-			set winner = ${input.winner},
-				fun = ${input.fun},
-				p2_fun = ${input.p2Fun},
-				p3_fun = ${input.p3Fun},
-				p4_fun = ${input.p4Fun},
-				notes = ${input.notes},
-				est_bracket = ${input.estBracket}
-			where user_id = ${this.user.id}
-				and id = ${input.gameId}
-		`;
+		const result = await prisma.game.updateMany({
+			where: { userId: this.user.id, id: input.gameId },
+			data: {
+				winner: input.winner,
+				fun: input.fun,
+				p2Fun: input.p2Fun,
+				p3Fun: input.p3Fun,
+				p4Fun: input.p4Fun,
+				notes: input.notes,
+				estBracket: input.estBracket
+			}
+		});
 
-		if (!result.rowCount) {
+		if (!result.count) {
 			throw new DataManagerError('Game not found', 404);
 		}
 	}
@@ -311,14 +505,11 @@ export class DbDataManager extends DataManager {
 	async deleteGame(gameId: string): Promise<void> {
 		if (this.useFixtures) return;
 
-		const sql = await getSql();
-		const result = await sql`
-			delete from games
-			where user_id = ${this.user.id}
-				and id = ${gameId}
-		`;
+		const result = await prisma.game.deleteMany({
+			where: { userId: this.user.id, id: gameId }
+		});
 
-		if (!result.rowCount) {
+		if (!result.count) {
 			throw new DataManagerError('Game not found', 404);
 		}
 	}
@@ -326,24 +517,18 @@ export class DbDataManager extends DataManager {
 	async deleteDeck(deckId: string, _deckName: string): Promise<number> {
 		if (this.useFixtures) return 0;
 
-		const sql = await getSql();
-		const { rows } = await sql`
-			select count(*)::int as count
-			from games
-			where user_id = ${this.user.id}
-				and deck_id = ${deckId}
-		`;
+		const gameCount = await prisma.game.count({
+			where: { userId: this.user.id, deckId }
+		});
 
-		const result = await sql`
-			delete from decks
-			where user_id = ${this.user.id}
-				and id = ${deckId}
-		`;
+		const result = await prisma.deck.deleteMany({
+			where: { userId: this.user.id, id: deckId }
+		});
 
-		if (!result.rowCount) {
+		if (!result.count) {
 			throw new DataManagerError('Deck not found', 404);
 		}
 
-		return rows[0]?.count ?? 0;
+		return gameCount;
 	}
 }

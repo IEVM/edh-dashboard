@@ -310,7 +310,7 @@ export function statsFromGames(games: Games): Stats {
 			funSelfValues.push(g.fun);
 
 			if (g.winner === 1) funWinsValues.push(g.fun);
-			else if (g.winner === 0) funLossValues.push(g.fun);
+			else if (g.winner && g.winner >= 2 && g.winner <= 4) funLossValues.push(g.fun);
 		}
 
 		if (g.p2Fun !== null) funOtherValues.push(g.p2Fun);

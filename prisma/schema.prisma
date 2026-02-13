@@ -1,0 +1,60 @@
+datasource db {
+	provider = "postgresql"
+}
+
+generator client {
+	provider = "prisma-client-js"
+}
+
+model User {
+	id        String   @id @db.Text
+	email     String?
+	name      String?
+	avatarUrl String?  @map("avatar_url")
+	createdAt DateTime @default(now()) @map("created_at")
+	updatedAt DateTime @updatedAt @map("updated_at")
+
+	decks Deck[]
+	games Game[]
+
+	@@map("users")
+}
+
+model Deck {
+	id            String   @id @db.Uuid
+	userId        String   @map("user_id")
+	name          String
+	targetBracket Int?     @map("target_bracket")
+	summary       String?
+	archidektLink String?  @map("archidekt_link")
+	createdAt     DateTime @default(now()) @map("created_at")
+	updatedAt     DateTime @updatedAt @map("updated_at")
+
+	user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+	games Game[]
+
+	@@unique([userId, name])
+	@@index([userId])
+	@@map("decks")
+}
+
+model Game {
+	id         String   @id @db.Uuid
+	userId     String   @map("user_id")
+	deckId     String   @map("deck_id") @db.Uuid
+	winner     Int?
+	fun        Int?
+	p2Fun      Int?     @map("p2_fun")
+	p3Fun      Int?     @map("p3_fun")
+	p4Fun      Int?     @map("p4_fun")
+	notes      String?
+	estBracket Int?     @map("est_bracket")
+	createdAt  DateTime @default(now()) @map("created_at")
+
+	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+	deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+	@@index([userId])
+	@@index([deckId])
+	@@map("games")
+}
