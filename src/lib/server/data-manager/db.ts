@@ -38,8 +38,10 @@ export class DbDataManager extends DataManager {
 		const manager = new DbDataManager(user, useFixtures);
 
 		if (!useFixtures) {
+			const isVercel = env.VERCEL === '1' || env.VERCEL === 'true';
+			const hasOverride = !isVercel && !!env.POSTGRES_URL_OVERRIDE;
 			if (
-				!env.POSTGRES_URL_OVERRIDE &&
+				!hasOverride &&
 				!env.POSTGRES_URL_NON_POOLING &&
 				!env.POSTGRES_PRISMA_URL &&
 				!env.POSTGRES_URL

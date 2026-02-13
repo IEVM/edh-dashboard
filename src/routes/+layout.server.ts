@@ -18,9 +18,10 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	const user = await getAuthUser(locals);
 	const isAuthenticated = !!user;
 	const isE2E = env.E2E_TEST_MODE === '1';
+	const isVercel = env.VERCEL === '1' || env.VERCEL === 'true';
 	const hasDatabase =
 		isE2E ||
-		!!POSTGRES_URL_OVERRIDE ||
+		(!isVercel && !!POSTGRES_URL_OVERRIDE) ||
 		!!POSTGRES_URL_NON_POOLING ||
 		!!POSTGRES_PRISMA_URL ||
 		!!POSTGRES_URL;
