@@ -22,7 +22,13 @@ export function getPrisma() {
 		);
 	}
 
-	const pool = new Pool({ connectionString });
+	const disableSslVerify =
+		connectionString.includes('pooler.supabase.com') ||
+		connectionString.includes('pgbouncer=true');
+	const pool = new Pool({
+		connectionString,
+		ssl: disableSslVerify ? { rejectUnauthorized: false } : undefined
+	});
 	const adapter = new PrismaPg(pool);
 	const client = new PrismaClient({
 		log: ['error'],
