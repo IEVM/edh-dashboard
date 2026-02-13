@@ -16,8 +16,10 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	const hasDatabase =
 		isE2E ||
 		!!env.POSTGRES_PRISMA_URL ||
-		!!env.POSTGRES_URL ||
-		(!isVercel && (!!env.POSTGRES_URL_OVERRIDE || !!env.POSTGRES_URL_NON_POOLING));
+		(!isVercel &&
+			(!!env.POSTGRES_URL ||
+				!!env.POSTGRES_URL_OVERRIDE ||
+				!!env.POSTGRES_URL_NON_POOLING));
 
 	return {
 		isAuthenticated,

@@ -44,7 +44,7 @@ export class DbDataManager extends DataManager {
 				!hasOverride &&
 				!env.POSTGRES_URL_NON_POOLING &&
 				!env.POSTGRES_PRISMA_URL &&
-				!env.POSTGRES_URL
+				(!isVercel && !env.POSTGRES_URL)
 			) {
 				throw new DataManagerError('Database not configured', 500);
 			}
