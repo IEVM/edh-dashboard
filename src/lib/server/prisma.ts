@@ -11,9 +11,15 @@ export function getPrisma() {
 	if (globalForPrisma.prisma) return globalForPrisma.prisma;
 
 	const connectionString =
-		env.POSTGRES_URL_NON_POOLING ?? env.POSTGRES_PRISMA_URL ?? env.POSTGRES_URL ?? '';
+		env.POSTGRES_URL_OVERRIDE ??
+		env.POSTGRES_URL_NON_POOLING ??
+		env.POSTGRES_PRISMA_URL ??
+		env.POSTGRES_URL ??
+		'';
 	if (!connectionString) {
-		throw new Error('POSTGRES_PRISMA_URL is not configured');
+		throw new Error(
+			'Database connection is not configured (POSTGRES_URL_OVERRIDE/POSTGRES_URL_NON_POOLING/POSTGRES_PRISMA_URL/POSTGRES_URL)'
+		);
 	}
 
 	const pool = new Pool({ connectionString });

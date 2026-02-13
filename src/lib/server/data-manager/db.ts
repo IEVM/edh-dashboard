@@ -38,7 +38,12 @@ export class DbDataManager extends DataManager {
 		const manager = new DbDataManager(user, useFixtures);
 
 		if (!useFixtures) {
-			if (!env.POSTGRES_PRISMA_URL && !env.POSTGRES_URL) {
+			if (
+				!env.POSTGRES_URL_OVERRIDE &&
+				!env.POSTGRES_URL_NON_POOLING &&
+				!env.POSTGRES_PRISMA_URL &&
+				!env.POSTGRES_URL
+			) {
 				throw new DataManagerError('Database not configured', 500);
 			}
 

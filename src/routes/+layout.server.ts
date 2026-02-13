@@ -1,5 +1,10 @@
 import type { LayoutServerLoad } from './$types';
-import { POSTGRES_PRISMA_URL } from '$env/static/private';
+import {
+	POSTGRES_PRISMA_URL,
+	POSTGRES_URL,
+	POSTGRES_URL_NON_POOLING,
+	POSTGRES_URL_OVERRIDE
+} from '$env/static/private';
 import { env } from '$env/dynamic/private';
 import { getAuthUser } from '$lib/server/auth';
 
@@ -13,7 +18,12 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	const user = await getAuthUser(locals);
 	const isAuthenticated = !!user;
 	const isE2E = env.E2E_TEST_MODE === '1';
-	const hasDatabase = isE2E || !!POSTGRES_PRISMA_URL;
+	const hasDatabase =
+		isE2E ||
+		!!POSTGRES_URL_OVERRIDE ||
+		!!POSTGRES_URL_NON_POOLING ||
+		!!POSTGRES_PRISMA_URL ||
+		!!POSTGRES_URL;
 
 	return {
 		isAuthenticated,
